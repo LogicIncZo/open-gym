@@ -8,9 +8,10 @@ interface Props {
   alt: string;
   class?: string;
   ground?: boolean;
+  eager?: boolean;
 }
 
-const { id, alt, class: cls = "", ground = true } = Astro.props;
+const { id, alt, class: cls = "", ground = true, eager = false } = Astro.props;
 const art = ART[id] ?? "";
 const photo = photoFor(id);
 ---
@@ -23,7 +24,8 @@ const photo = photoFor(id);
       alt={alt}
       width="1000"
       height="750"
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
+      fetchpriority={eager ? "high" : undefined}
       decoding="async"
     />
   ) : (

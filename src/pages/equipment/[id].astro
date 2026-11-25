@@ -59,6 +59,7 @@ const sections = [
       <div class="eqhead__art" data-visual={photo ? "photo" : "diagram"} style={`background:${meta.tint}`}>
         <EquipmentArt
           id={item.id}
+          eager
           alt={photo
             ? `Representative photo of an outdoor ${item.name.toLowerCase()} station`
             : `Illustration of a ${item.name.toLowerCase()}`}

@@ -509,6 +509,32 @@ hr.rule {
   border-bottom: 2px solid var(--ink);
   aspect-ratio: 3 / 2;
   display: block;
+  overflow: hidden;
+  position: relative;
+}
+
+.eqcard__art::after {
+  content: attr(data-visual);
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+
+.eqcard__art img,
+.eqcard__art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .eqcard__body {

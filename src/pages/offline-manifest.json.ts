@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { EQUIPMENT } from "../data/equipment";
 import { PARKS } from "../data/parks";
+import { PHOTO_IDS, PHOTOS } from "../data/photos";
 import { u } from "../lib/url";
 
 const routes = [
@@ -11,8 +12,11 @@ const routes = [
   "/park/",
   "/safety/",
   "/about/",
+  "/videos/",
+  "/credits/",
   ...EQUIPMENT.map((e) => `/equipment/${e.id}/`),
   ...PARKS.map((p) => `/parks/${p.citySlug}/${p.slug}/`),
+  ...PHOTO_IDS.map((id) => `/photos/${PHOTOS[id].file}`),
 ];
 
 export const GET: APIRoute = () =>

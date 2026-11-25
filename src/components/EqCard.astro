@@ -2,6 +2,7 @@
 import type { Equipment } from "../data/types";
 import { categoryMeta } from "../data/types";
 import { u } from "../lib/url";
+import { photoFor } from "../data/photos";
 import EquipmentArt from "./EquipmentArt.astro";
 
 interface Props {
@@ -17,7 +18,7 @@ const minutes =
 ---
 
 <a class="eqcard" href={u(`/equipment/${item.id}/`)} data-station data-cat={item.category} data-diff={item.difficulty} data-name={item.name.toLowerCase()} data-aliases={item.aliases.join(" ").toLowerCase()} data-muscles={[...item.muscles.primary, ...item.muscles.secondary].join(" ").toLowerCase()}>
-  <span class="eqcard__art" style={`background:${meta.tint}`}>
+  <span class="eqcard__art" data-visual={photoFor(item.id) ? "photo" : "diagram"} style={`background:${meta.tint}`}>
     <EquipmentArt id={item.id} alt={item.name} />
   </span>
   <span class="eqcard__body">

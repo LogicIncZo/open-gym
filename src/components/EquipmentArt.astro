@@ -1,5 +1,7 @@
 ---
 import { ART } from "../data/art";
+import { photoFor } from "../data/photos";
+import { u } from "../lib/url";
 
 interface Props {
   id: string;
@@ -10,17 +12,33 @@ interface Props {
 
 const { id, alt, class: cls = "", ground = true } = Astro.props;
 const art = ART[id] ?? "";
+const photo = photoFor(id);
 ---
 
-<svg
-  class={cls}
-  viewBox="0 0 240 160"
-  role="img"
-  aria-label={alt}
-  preserveAspectRatio="xMidYMid meet"
->
-  {ground && (
-    <line x1="26" y1="134" x2="214" y2="134" stroke="#C8B593" stroke-width="4" stroke-linecap="round" />
-  )}
-  <Fragment set:html={art} />
-</svg>
+{
+  photo ? (
+    <img
+      class={cls}
+      src={u(`/photos/${photo.file}`)}
+      alt={alt}
+      width="1000"
+      height="750"
+      loading="lazy"
+      decoding="async"
+    />
+  ) : (
+    <svg
+      class={cls}
+      viewBox="0 0 240 160"
+      role="img"
+      aria-label={alt}
+      preserveAspectRatio="xMidYMid meet"
+      data-visual="schematic"
+    >
+      {ground && (
+        <line x1="26" y1="134" x2="214" y2="134" stroke="#C8B593" stroke-width="4" stroke-linecap="round" />
+      )}
+      <Fragment set:html={art} />
+    </svg>
+  )
+}

@@ -27,6 +27,9 @@ To regenerate the DuckDB export: `pip install duckdb && python3 scripts/build-da
 |---|---|
 | `src/data/equipment/*.ts` | The catalogue — one typed record per station, grouped by category |
 | `src/data/art.ts` | 32 hand-authored SVG schematics (240×160, shared field-guide style) |
+| `src/data/photos.ts` | Representative Commons photos mapped to station ids, with artist + licence |
+| `src/data/videos.ts` | Hand-curated external demos with stated-presenter credentials |
+| `public/photos/` | Resized, locally hosted copies of the licensed station photos |
 | `src/data/parks/<city>/<slug>.json` | Park inventory records |
 | `src/data/types.ts` | `Equipment`, `Category`, benefit/verdict types |
 | `src/lib/circuit.ts` | Circuit builder (warm-up → alternating upper/lower → core → cool-down) |
@@ -38,6 +41,12 @@ To regenerate the DuckDB export: `pip install duckdb && python3 scripts/build-da
 ## Adding a station
 
 Add a typed `Equipment` record to the right file in `src/data/equipment/`, then add a matching SVG key in `src/data/art.ts`. The build fails loudly if a station has no artwork or if ids are duplicated. Keep every number sourced and mark benefit claims with tier 1 (guideline), 2 (plausible) or 3 (park lore, shown to be corrected).
+
+## Photos and video demos
+
+Seventeen stations have a real photograph from Wikimedia Commons; the rest keep the schematic. Photos are representative examples, not pictures of one park's hardware — the schematic stays the authoritative diagram of how a station works, and each card is labelled PHOTO or DIAGRAM. A photo may only be added with an identified station, a named artist and a licence URL in `src/data/photos.ts`, plus the resized local copy in `public/photos/`. Never caption a generic outdoor-gym photo as a specific station. All attributions are rendered on `/credits`.
+
+`/videos` and every station page list external demonstrations. Each carries the publisher's stated credential (accredited exercise scientist, clinician, certified trainer, manufacturer) or an explicit "no stated credential" — inclusion is not an endorsement. Re-check links and credentials when reviewing content.
 
 ## Adding a park
 

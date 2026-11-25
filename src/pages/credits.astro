@@ -1,0 +1,97 @@
+---
+import Base from "../layouts/Base.astro";
+import { EQUIPMENT } from "../data/equipment";
+import { PHOTOS } from "../data/photos";
+import { ALL_VIDEOS, CREDENTIAL_LABEL } from "../data/videos";
+import { u } from "../lib/url";
+
+const byName = Object.fromEntries(EQUIPMENT.map((e) => [e.id, e.name]));
+const photoRows = Object.entries(PHOTOS).sort((a, b) =>
+  (byName[a[0]] ?? a[0]).localeCompare(byName[b[0]] ?? b[0]),
+);
+---
+
+<Base
+  title="Image & video credits"
+  description="Attribution for every real-world photo and external video demo used in the Open Gym field guide."
+  path="/credits"
+>
+  <div class="wrap" style="padding-top:22px">
+    <p class="eyebrow">Attribution</p>
+    <h1>Image &amp; video credits</h1>
+    <p class="muted" style="max-width:68ch">
+      The hand-drawn station schematics in this guide are original and licensed CC BY-SA 4.0 with
+      the rest of the content. The real-world photographs below come from Wikimedia Commons and
+      keep their original licences; each one is resized for this site and credited on the station
+      page as well as here. External video demos are not ours — see how they were chosen below.
+    </p>
+
+    <section class="detail-section" id="photos">
+      <h2><span class="num">01</span> Station photographs</h2>
+      <p class="small muted">
+        A photo shows one example of a station type. Manufacturer designs vary, so treat the
+        schematic as the diagram of how the station works and the photo as what it looks like in a
+        real park.
+      </p>
+      <table class="credtable">
+        <thead>
+          <tr><th>Station</th><th>Photograph / author</th><th>Licence</th></tr>
+        </thead>
+        <tbody>
+          {photoRows.map(([id, p]) => (
+            <tr>
+              <td data-label="Station"><a href={u(`/equipment/${id}/`)}>{byName[id] ?? id}</a></td>
+              <td data-label="Photograph / author">
+                <a href={p.sourceUrl} rel="noopener noreferrer">{p.title}</a>
+                <br /><span class="tiny muted">by {p.artist} · {p.note}</span>
+              </td>
+              <td data-label="Licence">
+                <a href={p.licenseUrl} rel="noopener noreferrer">{p.license}</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="detail-section" id="videos">
+      <h2><span class="num">02</span> External video demos</h2>
+      <p class="small muted">
+        We look for presenters who state a professional credential — an accredited exercise
+        scientist, a registered physiotherapist or a certified trainer — and for public-health
+        bodies that publish their own demonstrations. Manufacturer clips are labelled as such.
+        Where a channel states no credential, we say so rather than imply one. Inclusion is not an
+        endorsement of a product, a programme or a paid service, and none of these videos have been
+        checked against the specific equipment in your park.
+      </p>
+      <table class="credtable">
+        <thead>
+          <tr><th>Video</th><th>Publisher</th><th>Stated basis</th></tr>
+        </thead>
+        <tbody>
+          {ALL_VIDEOS.map((v) => (
+            <tr>
+              <td data-label="Video"><a href={v.url} rel="noopener noreferrer">{v.title}</a></td>
+              <td data-label="Publisher">{v.channel}</td>
+              <td data-label="Stated basis">
+                {CREDENTIAL_LABEL[v.credential]}
+                <br /><span class="tiny muted">{v.credentialNote}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="detail-section" id="gaps">
+      <h2><span class="num">03</span> Why some stations still show a drawing</h2>
+      <p class="small">
+        Fifteen of the 32 stations have no reliably identifiable freely licensed photograph in
+        the sources we reviewed. Rather than caption a generic outdoor-gym photo as a specific
+        station, those entries keep the original schematic. If you can supply a clearly identified,
+        licensed photo of one of them, <a href="https://github.com/LogicIncZo/open-gym/issues/new">open an issue</a>
+        with the source and licence and we will add it.
+      </p>
+    </section>
+  </div>
+</Base>

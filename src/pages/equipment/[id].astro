@@ -11,6 +11,8 @@ import { EQUIPMENT, inCategory } from "../../data/equipment";
 import { categoryMeta } from "../../data/types";
 import { sourceList } from "../../data/sources";
 import { parksWithStation } from "../../data/parks";
+import { photoFor } from "../../data/photos";
+import { videosFor, CREDENTIAL_LABEL } from "../../data/videos";
 import { u } from "../../lib/url";
 
 export function getStaticPaths() {
@@ -22,6 +24,8 @@ const meta = categoryMeta(item.category);
 const related = inCategory(item.category).filter((e) => e.id !== item.id).slice(0, 3);
 const parks = parksWithStation(item.id);
 const srcs = sourceList(item.sources);
+const photo = photoFor(item.id);
+const videos = videosFor(item.id);
 const prevalenceLabel = { common: "In most parks", occasional: "In some parks", rare: "Rarely installed" } as const;
 const confidenceLabel = {
   high: "High confidence",
@@ -41,6 +45,7 @@ const sections = [
   ["progress", "Easier / harder"],
   ["boards", "The park board audit"],
   ["sources", "Sources"],
+  ["videos", "Video demos"],
 ];
 ---
 
@@ -51,8 +56,20 @@ const sections = [
     </nav>
 
     <header class="eqhead">
-      <div class="eqhead__art" style={`background:${meta.tint}`}>
-        <EquipmentArt id={item.id} alt={`Illustration of a ${item.name.toLowerCase()}`} />
+      <div class="eqhead__art" data-visual={photo ? "photo" : "diagram"} style={`background:${meta.tint}`}>
+        <EquipmentArt
+          id={item.id}
+          alt={photo
+            ? `Representative photo of an outdoor ${item.name.toLowerCase()} station`
+            : `Illustration of a ${item.name.toLowerCase()}`}
+        />
+        {photo && (
+          <div class="photo-credit">
+            Representative photo · <a href={photo.sourceUrl} rel="noopener noreferrer">{photo.artist}</a>
+            {" · "}<a href={photo.licenseUrl} rel="noopener noreferrer">{photo.license}</a>
+            {" · "}<a href={u("/credits")}>Credits</a>
+          </div>
+        )}
       </div>
       <div>
         <div class="eqhead__meta">
@@ -247,6 +264,30 @@ const sections = [
           </ul>
         </div>
       )}
+    </section>
+
+    <section class="detail-section" id="videos">
+      <h2><span class="num">12</span> Video demos</h2>
+      <p class="small muted" style="margin-top:-4px">
+        External videos, hand-picked for source quality. A credential is listed only when the
+        publisher states one. They show general technique — the equipment in your park may differ,
+        and a video is not a safety inspection. <a href={u("/credits")}>Why these sources?</a>
+      </p>
+      <ul class="videolist">
+        {videos.map((v) => (
+          <li>
+            <a class="videolist__title" href={v.url} rel="noopener noreferrer">{v.title}</a>
+            <span class="videolist__meta">
+              <span><strong>{v.channel}</strong></span>
+              <span>·</span>
+              <span>{CREDENTIAL_LABEL[v.credential]}</span>
+              <span>·</span>
+              <span>{v.language}</span>
+            </span>
+            <p class="tiny muted" style="margin:5px 0 0">{v.credentialNote} {v.scope}</p>
+          </li>
+        ))}
+      </ul>
     </section>
 
     <div class="section">

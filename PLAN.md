@@ -1,7 +1,9 @@
 # Open Gym Portal — Plan
 
-Status: draft v1 · 2026-11-25
-Working name: **Open Gym** (site name TBD) · proposed domain `open-gym.cashlessconsumer.in`
+Status: v0.1 built and deployed · 2026-11-25 (this plan is the original brief; README.md is the current handover)
+Working name: **Open Gym** · live at https://logicinczo.github.io/open-gym/ (GitHub Pages base `/open-gym`)
+
+Shipped in v0.1: all 32 illustrated stations, equipment pages, catalog filters, park builder with stateless share tokens / QR / print, one demonstration park registry entry, offline service worker, JSON/CSV/DuckDB exports, GH Pages deploy workflow and a park-submission issue form. Deferred: Tamil/Hindi UI, physiotherapist review, verified community park inventory, custom domain.
 
 A public, open-data guide to outdoor/park gym equipment in India: what each station is, how to use it safely, how long adults and children should spend on it, what overuse does, and a builder that turns "the equipment in my park" into a shareable park page and WhatsApp-ready circuit.
 
@@ -284,10 +286,10 @@ P1 and P2 can overlap if the illustrations are batched.
 
 ---
 
-## 12. Open decisions
+## 12. Decisions taken (2026-11-25)
 
-1. **Which park** — name, locality, and the equipment list (or photos) to seed the first real park page.
-2. **Languages** — EN + Tamil at launch, or EN only first?
-3. **Look** — illustration style (flat vs isometric) and whether to use your own park photos on park pages.
-4. **Hosting/domain** — `open-gym.cashlessconsumer.in` on Netlify, or a GH Pages subpath to start.
-5. **Scope of "child"** — keep the conservative 12+ line, or add a separate kids' play-equipment section (different standard, different risk profile).
+1. **Park** — Natesan Park, Chennai seeded as an explicitly labelled demonstration entry. Real verified inventory is still needed.
+2. **Languages** — English first; Tamil/Hindi are a later phase.
+3. **Look** — flat field-guide SVG schematics authored in `src/data/art.ts`; no supplier photos.
+4. **Hosting** — GitHub Pages subpath on `LogicIncZo/open-gym`; no Netlify custom domain yet.
+5. **Children** — kept the conservative 12+ line for fitness stations; play/climbing stations are a separate category with their own supervision notes.

@@ -1,0 +1,103 @@
+name: Add my park
+description: Submit an outdoor gym to the Open Gym park registry
+title: "[Add park] "
+labels: ["park-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for adding a park. Please visit in person and check each station before submitting —
+        entries are labelled unverified until a maintainer reviews them. Do not include names of
+        children or other identifiable people in photos.
+  - type: input
+    id: park-name
+    attributes:
+      label: Park name
+      placeholder: e.g. Natesan Park
+    validations:
+      required: true
+  - type: input
+    id: city
+    attributes:
+      label: City
+      placeholder: e.g. Chennai
+    validations:
+      required: true
+  - type: input
+    id: locality
+    attributes:
+      label: Locality / neighbourhood
+      placeholder: e.g. T. Nagar
+    validations:
+      required: true
+  - type: input
+    id: map
+    attributes:
+      label: Map link
+      description: OpenStreetMap or Google Maps link to the exact entrance.
+      placeholder: https://www.openstreetmap.org/...
+    validations:
+      required: true
+  - type: checkboxes
+    id: stations
+    attributes:
+      label: Stations present
+      description: Tick every station you actually saw. Use "Other" for anything not listed.
+      options:
+        - label: Air Walker
+        - label: Cross Trainer
+        - label: Manual Treadmill Rollers
+        - label: Moon Walker
+        - label: Outdoor Exercise Bike
+        - label: Rider / Horse Rider
+        - label: Ski Walker
+        - label: Stepper (Sky Stepper)
+        - label: Arm Wheel / Arm Paddle
+        - label: Chin-up / Pull-up Bar
+        - label: Lat Pulldown
+        - label: Outdoor Rowing Machine
+        - label: Parallel Bars / Dips
+        - label: Push-up Bars
+        - label: Seated Chest Press
+        - label: Seated Row
+        - label: Shoulder Press
+        - label: Calf Raise Platform
+        - label: Hip Adductor / Abductor
+        - label: Leg Extension
+        - label: Leg Press
+        - label: Back Extension Bench
+        - label: Sit-up Board
+        - label: Pendulum / Leg Swing
+        - label: Shoulder Wheel
+        - label: Stretch Station
+        - label: Twister
+        - label: Waist Bend
+        - label: Balance Beam
+        - label: Climbing Net / Wall
+        - label: Monkey Bars
+        - label: Multi-Gym Combo
+        - label: Other (name it in the notes box)
+  - type: textarea
+    id: conditions
+    attributes:
+      label: Condition notes
+      description: One line per station — good / fair / poor / broken, and anything a user should watch out for.
+    validations:
+      required: true
+  - type: textarea
+    id: practical
+    attributes:
+      label: Practical details
+      description: Surface, shade, water, timings, entry fee, wheelchair access. One per line.
+  - type: input
+    id: photos
+    attributes:
+      label: Photo links
+      description: Links to photos you can share (upload to the issue if easier). Avoid identifiable people.
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Confirmation
+      options:
+        - label: I visited this park and the details above are accurate to the best of my knowledge.
+          required: true

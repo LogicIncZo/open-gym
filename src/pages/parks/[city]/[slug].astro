@@ -19,6 +19,14 @@ const ids = park.stations.map((s) => s.id).filter((id) => byId(id));
 const circuit = buildCircuit(ids, ids.map((id) => byId(id)!).filter(Boolean), "general");
 const working = park.stations.filter((s) => s.condition === "good" || s.condition === "fair");
 const partner = PARKS.filter((p) => p.citySlug === park.citySlug && p.slug !== park.slug).slice(0, 3);
+const reportBody = [
+  `Park: ${park.name} (${park.locality}, ${park.city})`,
+  "Station:",
+  "What changed (broken / removed / added / condition):",
+  "Date observed:",
+  "Photo or map link (optional):",
+].join("\n");
+const reportUrl = `https://github.com/LogicIncZo/open-gym/issues/new?title=${encodeURIComponent(`Park report: ${park.name}, ${park.city}`)}&body=${encodeURIComponent(reportBody)}`;
 ---
 
 <Base
@@ -114,6 +122,7 @@ const partner = PARKS.filter((p) => p.citySlug === park.citySlug && p.slug !== p
             version of this park and share the new link.
           </p>
           <a class="btn btn--sm btn--block" style="margin-top:10px" href={u("/build")}>Rebuild this inventory</a>
+          <a class="btn btn--sm btn--block" style="margin-top:8px" href={reportUrl} rel="noopener noreferrer" target="_blank">Report a broken station</a>
         </div>
 
         <div class="callout callout--amber" style="margin-top:14px">

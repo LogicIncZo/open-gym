@@ -54,6 +54,10 @@ The service worker caches the full site on first install using `/offline-manifes
 - Under-5s should not use outdoor fitness stations; 5–11s only low-risk stations with an adult within arm's reach. EN 16630:2015 is written for adult/youth equipment, not playgrounds.
 - English first. Tamil and Hindi strings are a later phase; the data model keeps names in all three languages where available.
 
+## Known limitation
+
+Share-token links render the park name in the page after load, but WhatsApp and other scrapers read only the static HTML, so their preview card shows the generic "Park circuit shared on Open Gym" title rather than the park name. Per-link OG rewriting needs an edge function; it was deliberately not added because the deploy target is static GitHub Pages. Registry park pages have real per-park OG tags.
+
 ## Status
 
 v0.1 — draft, unreviewed by a physiotherapist. Content CC BY-SA 4.0, code MIT.

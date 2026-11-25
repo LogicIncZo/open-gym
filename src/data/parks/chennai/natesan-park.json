@@ -1,0 +1,37 @@
+{
+  "slug": "natesan-park",
+  "name": "Natesan Park",
+  "city": "Chennai",
+  "citySlug": "chennai",
+  "locality": "Teynampet",
+  "verified": false,
+  "verifiedOn": null,
+  "surface": "Paved walkway; sand under the equipment area",
+  "shade": "Partial — tree cover over half the stations",
+  "water": "Public tap near the north gate",
+  "timings": "Early morning and evening walking hours",
+  "entry": "Free",
+  "accessibility": "Level approach from the main gate; no dedicated accessible station",
+  "stations": [
+    { "id": "air-walker", "condition": "good" },
+    { "id": "twister", "condition": "fair", "note": "Disc turns but wobbles slightly" },
+    { "id": "leg-press", "condition": "good" },
+    { "id": "chest-press", "condition": "good" },
+    { "id": "seated-row", "condition": "fair" },
+    { "id": "parallel-bars", "condition": "good" },
+    { "id": "pull-up-bar", "condition": "good" },
+    { "id": "sit-up-board", "condition": "poor", "note": "Foot hooks loose" },
+    { "id": "balance-beam", "condition": "good" }
+  ],
+  "notes": [
+    "Starter entry, not a verified inventory. Walk the park and correct the list before sharing it with anyone.",
+    "The equipment area is unsupervised. No instructor is present at any time of day.",
+    "Sand under the stations is deep in places — check footwear before using the balance beam."
+  ],
+  "contributor": "Open Gym starter example",
+  "map": {
+    "osm": "https://www.openstreetmap.org/search?query=Natesan%20Park%20Chennai",
+    "google": "https://www.google.com/maps/search/?api=1&query=Natesan+Park+Chennai"
+  },
+  "disclaimer": "This is a demonstration entry shipped with the site. The equipment list is illustrative and has not been field-verified."
+}

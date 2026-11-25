@@ -1,0 +1,143 @@
+---
+import Base from "../../../layouts/Base.astro";
+import CircuitTable from "../../../components/CircuitTable.astro";
+import ShareRow from "../../../components/ShareRow.astro";
+import { PARKS, CONDITION_LABEL } from "../../../data/parks";
+import { byId } from "../../../data/equipment";
+import { buildCircuit } from "../../../lib/circuit";
+import { u } from "../../../lib/url";
+
+export function getStaticPaths() {
+  return PARKS.map((park) => ({
+    params: { city: park.citySlug, slug: park.slug },
+    props: { park },
+  }));
+}
+
+const { park } = Astro.props;
+const ids = park.stations.map((s) => s.id).filter((id) => byId(id));
+const circuit = buildCircuit(ids, ids.map((id) => byId(id)!).filter(Boolean), "general");
+const working = park.stations.filter((s) => s.condition === "good" || s.condition === "fair");
+const partner = PARKS.filter((p) => p.citySlug === park.citySlug && p.slug !== park.slug).slice(0, 3);
+---
+
+<Base
+  title={`${park.name}, ${park.city}`}
+  description={`Equipment inventory and a ready-made circuit for ${park.name} in ${park.locality}, ${park.city}.`}
+  path={`/parks/${park.citySlug}/${park.slug}`}
+>
+  <div class="wrap">
+    <nav class="tiny muted" aria-label="Breadcrumb" style="padding-top:14px">
+      <a href={u("/parks")}>Parks</a> › <a href={u("/parks")}>{park.city}</a> › {park.name}
+    </nav>
+
+    <header class="park-head">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <p class="eyebrow" style="margin-bottom:4px">{park.locality} · {park.city}</p>
+          <h1 style="margin-bottom:4px">{park.name}</h1>
+          <p class="muted" style="margin-bottom:0">
+            {park.stations.length} stations listed · {working.length} usable as recorded
+          </p>
+        </div>
+        <span class={`badge ${park.verified ? "badge--leaf" : "badge--quiet"}`}>
+          {park.verified ? `Verified ${park.verifiedOn ?? ""}` : "Unverified inventory"}
+        </span>
+      </div>
+    </header>
+
+    {park.disclaimer && (
+      <div class="callout callout--grey" style="margin-top:14px">
+        <p class="callout__title">About this entry</p>
+        <p class="small" style="margin-bottom:0">{park.disclaimer}</p>
+      </div>
+    )}
+
+    <div class="bld__layout section" style="margin-top:22px">
+      <div>
+        <div class="park-sheet">
+          <h2 style="font-size:1.3rem">The station list</h2>
+          <ul class="stationlist">
+            {park.stations.map((s) => {
+              const item = byId(s.id);
+              if (!item) return null;
+              return (
+                <li>
+                  <a href={u(`/equipment/${item.id}/`)}>{item.name}</a>
+                  <span class={`cond cond--${s.condition}`}>{CONDITION_LABEL[s.condition]}</span>
+                  {s.note && <span class="note">{s.note}</span>}
+                </li>
+              );
+            })}
+          </ul>
+          <div class="row" style="margin-top:14px">
+            {park.map.osm && <a class="btn btn--sm" href={park.map.osm} rel="noopener noreferrer">Open in OpenStreetMap</a>}
+            {park.map.google && <a class="btn btn--sm" href={park.map.google} rel="noopener noreferrer">Google Maps</a>}
+          </div>
+        </div>
+
+        <div class="park-sheet" style="margin-top:16px">
+          <h2 style="font-size:1.3rem">A circuit for this park</h2>
+          <p class="small muted">
+            Built from the stations recorded as present, ordered warm-up → main → cool-down and
+            filtered to what this equipment can actually support. Assumes an adult in reasonable
+            health.
+          </p>
+          <CircuitTable circuit={circuit} />
+        </div>
+
+        <div class="park-sheet" style="margin-top:16px">
+          <h2 style="font-size:1.3rem">Practical notes</h2>
+          <dl class="deflist">
+            <div><dt>Surface</dt><dd>{park.surface}</dd></div>
+            <div><dt>Shade</dt><dd>{park.shade}</dd></div>
+            <div><dt>Water</dt><dd>{park.water}</dd></div>
+            <div><dt>Timings</dt><dd>{park.timings}</dd></div>
+            <div><dt>Entry</dt><dd>{park.entry}</dd></div>
+            <div><dt>Accessibility</dt><dd>{park.accessibility}</dd></div>
+            <div><dt>Contributor</dt><dd>{park.contributor}</dd></div>
+          </dl>
+          {park.notes.length > 0 && (
+            <ul class="small" style="margin:12px 0 0;padding-left:18px">
+              {park.notes.map((n) => <li>{n}</li>)}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <aside class="bld__side">
+        <div class="card">
+          <h3 style="font-size:1rem">Share this park</h3>
+          <ShareRow text={`${park.name} (${park.locality}, ${park.city}) — stations and a ready-made circuit.`} />
+          <p class="tiny muted" style="margin:12px 0 0">
+            Spotted a change? Equipment gets repaired, vandalised or removed. Build an updated
+            version of this park and share the new link.
+          </p>
+          <a class="btn btn--sm btn--block" style="margin-top:10px" href={u("/build")}>Rebuild this inventory</a>
+        </div>
+
+        <div class="callout callout--amber" style="margin-top:14px">
+          <p class="callout__title">Check before you load</p>
+          <p class="small" style="margin-bottom:0">
+            Unverified entries are a snapshot, not a live status. Walk the frame, shake the posts,
+            and test every moving part before you put weight on it.
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    {partner.length > 0 && (
+      <section class="section">
+        <div class="section__head"><h2>More in {park.city}</h2></div>
+        <div class="grid grid--2">
+          {partner.map((p) => (
+            <a class="card" href={u(`/parks/${p.citySlug}/${p.slug}/`)} style="text-decoration:none;color:inherit">
+              <h3 style="margin-bottom:2px">{p.name}</h3>
+              <p class="small muted" style="margin-bottom:0">{p.locality} · {p.stations.length} stations</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</Base>

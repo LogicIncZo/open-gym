@@ -1,0 +1,61 @@
+---
+import Base from "../../layouts/Base.astro";
+import EqCard from "../../components/EqCard.astro";
+import { EQUIPMENT } from "../../data/equipment";
+import { CATEGORIES } from "../../data/types";
+---
+
+<Base
+  title="All 32 stations"
+  description="Illustrated entries for every common outdoor gym station in India: cardio, upper body, lower body, core, mobility, balance, play and combo frames."
+  path="/equipment"
+>
+  <div class="wrap" style="padding-top:22px">
+    <p class="eyebrow">The catalogue</p>
+    <h1 style="margin-bottom:0.3em">All {EQUIPMENT.length} stations</h1>
+    <p class="muted" style="max-width:60ch">
+      Grouped by what they train. Every entry covers setup, technique, minutes for adults and
+      children, overuse signs, inspection points, and an audit of the claims on the park board.
+    </p>
+
+    <div class="filterbar" data-filterbar style="margin-top:18px">
+      <label class="filterbar__search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+        <span class="sr-only">Search stations</span>
+        <input type="search" placeholder="Search: chest, pull, calf, balance…" data-filter-search autocomplete="off" />
+      </label>
+      <div class="filterbar__chips">
+        <button class="chip" type="button" data-filter-cat="all" aria-pressed="true">All</button>
+        {CATEGORIES.map((c) => (
+          <button class="chip" type="button" data-filter-cat={c.id} aria-pressed="false">{c.label}</button>
+        ))}
+      </div>
+    </div>
+
+    <div class="results-line">
+      <span><strong data-result-count>{EQUIPMENT.length}</strong> stations shown</span>
+      <span class="tiny">Tap a station for the full entry</span>
+    </div>
+
+    <div class="grid grid--3">
+      {EQUIPMENT.map((item) => <EqCard item={item} />)}
+    </div>
+
+    <div class="empty-state" data-empty hidden>
+      <p style="margin-bottom:4px"><strong>Nothing matches that.</strong></p>
+      <p class="small" style="margin-bottom:0">
+        Try a body part (“shoulder”), a movement (“pull”) or clear the filters.
+      </p>
+    </div>
+
+    <noscript>
+      <p class="callout callout--grey" style="margin-top:18px">
+        Filters need JavaScript. All {EQUIPMENT.length} stations are listed above regardless.
+      </p>
+    </noscript>
+  </div>
+
+  <script>
+    import "../../scripts/equipment-filter";
+  </script>
+</Base>

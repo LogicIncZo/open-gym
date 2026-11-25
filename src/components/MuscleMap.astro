@@ -1,0 +1,206 @@
+---
+interface Props {
+  primary: string[];
+  secondary: string[];
+}
+
+const { primary, secondary } = Astro.props;
+
+const norm = (list: string[]) => list.join(" ").toLowerCase();
+
+const RULES: { region: string; re: RegExp }[] = [
+  { region: "chest", re: /pectoral|chest/ },
+  { region: "shoulders", re: /deltoid|shoulder/ },
+  { region: "arms", re: /biceps|triceps|forearm|grip|finger|wrist/ },
+  { region: "upperback", re: /rhomboid|trapezius|upper back|scapular|rear deltoid/ },
+  { region: "lats", re: /latissimus/ },
+  { region: "spine", re: /erector|multifidus|spinal|quadratus/ },
+  { region: "core", re: /rectus abdominis|transverse|abdominal|oblique|core/ },
+  { region: "glutes", re: /glute/ },
+  { region: "quads", re: /quadriceps/ },
+  { region: "hams", re: /hamstring/ },
+  { region: "calves", re: /calv|soleus|achilles|ankle|foot|intrinsic/ },
+  { region: "adductors", re: /adductor|groin|inner thigh/ },
+  { region: "hips", re: /hip flexor|iliopsoas|hip rotator|abductor|hip/ },
+  { region: "neck", re: /cervical|neck/ },
+];
+
+const marks = (list: string[]) => {
+  const s = norm(list);
+  const hit = new Set<string>();
+  for (const r of RULES) if (r.re.test(s)) hit.add(r.region);
+  return hit;
+};
+
+const p = marks(primary);
+const s2 = marks(secondary);
+const state = (region: string) => (p.has(region) ? "is-primary" : s2.has(region) ? "is-secondary" : "");
+
+const FRONT: Record<string, string[]> = {
+  neck: ['<rect x="41" y="28" width="8" height="8" rx="3"/>'],
+  shoulders: ['<circle cx="24" cy="48" r="9"/>', '<circle cx="66" cy="48" r="9"/>'],
+  chest: ['<rect x="32" y="40" width="26" height="24" rx="8"/>'],
+  arms: [
+    '<rect x="14" y="54" width="10" height="32" rx="5"/>',
+    '<rect x="66" y="54" width="10" height="32" rx="5"/>',
+    '<rect x="15" y="88" width="9" height="30" rx="4.5"/>',
+    '<rect x="66" y="88" width="9" height="30" rx="4.5"/>',
+  ],
+  core: ['<rect x="35" y="67" width="20" height="25" rx="6"/>'],
+  hips: ['<rect x="31" y="94" width="28" height="13" rx="6"/>'],
+  adductors: ['<rect x="42" y="108" width="6" height="22" rx="3"/>'],
+  quads: ['<rect x="31" y="108" width="12" height="40" rx="6"/>', '<rect x="47" y="108" width="12" height="40" rx="6"/>'],
+  calves: ['<rect x="33" y="157" width="10" height="28" rx="5"/>', '<rect x="47" y="157" width="10" height="28" rx="5"/>'],
+};
+
+const BACK: Record<string, string[]> = {
+  neck: ['<rect x="41" y="28" width="8" height="8" rx="3"/>'],
+  shoulders: ['<circle cx="24" cy="48" r="9"/>', '<circle cx="66" cy="48" r="9"/>'],
+  upperback: ['<rect x="32" y="40" width="26" height="18" rx="7"/>'],
+  lats: ['<rect x="29" y="57" width="13" height="20" rx="6"/>', '<rect x="48" y="57" width="13" height="20" rx="6"/>'],
+  spine: ['<rect x="42" y="55" width="6" height="36" rx="3"/>'],
+  arms: [
+    '<rect x="14" y="54" width="10" height="32" rx="5"/>',
+    '<rect x="66" y="54" width="10" height="32" rx="5"/>',
+    '<rect x="15" y="88" width="9" height="30" rx="4.5"/>',
+    '<rect x="66" y="88" width="9" height="30" rx="4.5"/>',
+  ],
+  glutes: ['<circle cx="37" cy="100" r="10"/>', '<circle cx="53" cy="100" r="10"/>'],
+  hams: ['<rect x="31" y="113" width="12" height="36" rx="6"/>', '<rect x="47" y="113" width="12" height="36" rx="6"/>'],
+  calves: ['<rect x="33" y="157" width="10" height="28" rx="5"/>', '<rect x="47" y="157" width="10" height="28" rx="5"/>'],
+};
+
+const labels: Record<string, string> = {
+  chest: "Chest",
+  shoulders: "Shoulders",
+  arms: "Arms & grip",
+  upperback: "Upper back",
+  lats: "Lats",
+  spine: "Spinal erectors",
+  core: "Trunk",
+  glutes: "Glutes",
+  quads: "Quadriceps",
+  hams: "Hamstrings",
+  calves: "Calves",
+  adductors: "Adductors",
+  hips: "Hip flexors",
+  neck: "Neck",
+};
+
+const active = [...new Set([...p, ...s2])].filter((r) => labels[r]);
+---
+
+<div class="mm">
+  <div class="mm__figs">
+    <figure>
+      <svg viewBox="0 0 90 200" role="img" aria-label="Front view, muscles worked">
+        <circle cx="45" cy="20" r="12" fill="#E2D6BE" />
+        {Object.entries(FRONT).map(([region, shapes]) => (
+          <g class={`mm-shape ${state(region)}`}>
+            {shapes.map((shape) => <Fragment set:html={shape} />)}
+          </g>
+        ))}
+        <rect x="34" y="186" width="10" height="8" rx="3" fill="#E2D6BE" />
+        <rect x="46" y="186" width="10" height="8" rx="3" fill="#E2D6BE" />
+      </svg>
+      <figcaption>Front</figcaption>
+    </figure>
+    <figure>
+      <svg viewBox="0 0 90 200" role="img" aria-label="Back view, muscles worked">
+        <circle cx="45" cy="20" r="12" fill="#E2D6BE" />
+        {Object.entries(BACK).map(([region, shapes]) => (
+          <g class={`mm-shape ${state(region)}`}>
+            {shapes.map((shape) => <Fragment set:html={shape} />)}
+          </g>
+        ))}
+        <rect x="34" y="186" width="10" height="8" rx="3" fill="#E2D6BE" />
+        <rect x="46" y="186" width="10" height="8" rx="3" fill="#E2D6BE" />
+      </svg>
+      <figcaption>Back</figcaption>
+    </figure>
+  </div>
+  <div class="mm__legend">
+    <p class="mm__list">
+      <span class="mm__key mm__key--p"></span>
+      <span><strong>Primary:</strong> {primary.join(", ") || "—"}</span>
+    </p>
+    <p class="mm__list">
+      <span class="mm__key mm__key--s"></span>
+      <span><strong>Secondary:</strong> {secondary.join(", ") || "—"}</span>
+    </p>
+    {active.length > 0 && (
+      <p class="tiny muted" style="margin:0">Highlighted: {active.map((r) => labels[r]).join(" · ")}</p>
+    )}
+  </div>
+</div>
+
+<style>
+  .mm {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 520px) {
+    .mm {
+      grid-template-columns: 150px 1fr;
+      align-items: center;
+    }
+  }
+  .mm__figs {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  .mm__figs figure {
+    margin: 0;
+    text-align: center;
+  }
+  .mm__figs svg {
+    width: 72px;
+    height: 160px;
+  }
+  .mm__figs figcaption {
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .mm-shape rect,
+  .mm-shape circle {
+    fill: #e2d6be;
+    transition: fill 0.2s ease;
+  }
+  .mm-shape.is-secondary rect,
+  .mm-shape.is-secondary circle {
+    fill: #d89b3c;
+  }
+  .mm-shape.is-primary rect,
+  .mm-shape.is-primary circle {
+    fill: #b04a28;
+  }
+  .mm__legend {
+    display: grid;
+    gap: 8px;
+  }
+  .mm__list {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .mm__key {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    flex: none;
+    transform: translateY(1px);
+  }
+  .mm__key--p {
+    background: #b04a28;
+  }
+  .mm__key--s {
+    background: #d89b3c;
+  }
+</style>

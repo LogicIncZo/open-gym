@@ -1,0 +1,78 @@
+---
+import type { Equipment } from "../data/types";
+
+interface Props {
+  item: Equipment;
+}
+const { item } = Astro.props;
+const label = { supported: "Supported", partly: "Partly true", unsupported: "Not supported" } as const;
+const count = {
+  supported: item.signboard.filter((s) => s.verdict === "supported").length,
+  partly: item.signboard.filter((s) => s.verdict === "partly").length,
+  unsupported: item.signboard.filter((s) => s.verdict === "unsupported").length,
+};
+---
+
+<div class="signboard">
+  <div class="signboard__meter" aria-label="Claim audit summary">
+    <span class="badge badge--leaf">{count.supported} supported</span>
+    <span class="badge badge--amber">{count.partly} partly true</span>
+    <span class="badge badge--terra">{count.unsupported} not supported</span>
+  </div>
+
+  <ul class="signboard__list">
+    {item.signboard.map((c) => (
+      <li>
+        <p class="signboard__claim">
+          <span class={`verdict verdict--${c.verdict}`}>{label[c.verdict]}</span>
+          <span>“{c.claim}”</span>
+        </p>
+        <p class="signboard__note">{c.note}</p>
+      </li>
+    ))}
+  </ul>
+
+  <p class="tiny muted" style="margin:10px 0 0">
+    These are claims printed on or near park equipment in India, audited against the evidence
+    available in the sources below. A “not supported” verdict means the claim is false or has no
+    good basis — not that the station is useless.
+  </p>
+</div>
+
+<style>
+  .signboard {
+    display: grid;
+    gap: 12px;
+  }
+  .signboard__meter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .signboard__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .signboard__list li {
+    border-left: 4px solid var(--line);
+    padding: 2px 0 2px 12px;
+  }
+  .signboard__claim {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 7px;
+    margin: 0 0 3px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .signboard__note {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+</style>

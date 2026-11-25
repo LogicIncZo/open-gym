@@ -1,0 +1,35 @@
+---
+import type { Equipment } from "../data/types";
+import { categoryMeta } from "../data/types";
+import { u } from "../lib/url";
+import EquipmentArt from "./EquipmentArt.astro";
+
+interface Props {
+  item: Equipment;
+  eager?: boolean;
+}
+const { item } = Astro.props;
+const meta = categoryMeta(item.category);
+const minutes =
+  item.category === "cardio" || item.category === "mobility"
+    ? item.minutes.adult.perStation
+    : `${item.minutes.adult.sets} × ${item.minutes.adult.perStation.replace(/^.*× /, "")}`;
+---
+
+<a class="eqcard" href={u(`/equipment/${item.id}/`)} data-station data-cat={item.category} data-diff={item.difficulty} data-name={item.name.toLowerCase()} data-aliases={item.aliases.join(" ").toLowerCase()} data-muscles={[...item.muscles.primary, ...item.muscles.secondary].join(" ").toLowerCase()}>
+  <span class="eqcard__art" style={`background:${meta.tint}`}>
+    <EquipmentArt id={item.id} alt={item.name} />
+  </span>
+  <span class="eqcard__body">
+    <span class="badge" style={`background:${meta.tint};border-color:${meta.ink};color:${meta.ink}`}>
+      {meta.label}
+    </span>
+    <h3 class="eqcard__title">{item.name}</h3>
+    <p class="eqcard__sum">{item.summary}</p>
+    <span class="eqcard__meta tiny muted">
+      <span>{minutes}</span>
+      <span aria-hidden="true">·</span>
+      <span>Level {item.difficulty}/5</span>
+    </span>
+  </span>
+</a>

@@ -1,0 +1,133 @@
+---
+import type { Circuit } from "../lib/circuit";
+import { u } from "../lib/url";
+
+interface Props {
+  circuit: Circuit;
+  compact?: boolean;
+}
+const { circuit, compact = false } = Astro.props;
+---
+
+<div class="circuit">
+  {circuit.steps.length === 0 ? (
+    <p class="muted small">Pick at least one station to generate a circuit.</p>
+  ) : (
+    <>
+      <ol class="circuit__list">
+        {circuit.steps.map((s) => (
+          <li class="circuit__item">
+            <span class={`circuit__phase circuit__phase--${s.phase.toLowerCase().replace("-", "")}`}>{s.phase}</span>
+            <a class="circuit__name" href={u(`/equipment/${s.stationId}/`)}>{s.name}</a>
+            <span class="circuit__min">{s.minutes} min</span>
+            {!compact && <span class="circuit__note">{s.note}</span>}
+          </li>
+        ))}
+      </ol>
+      <div class="circuit__total">
+        <span><strong>~{circuit.totalMinutes} min</strong> total</span>
+        <span>{circuit.restSeconds}s rest between stations</span>
+      </div>
+    </>
+  )}
+  {circuit.skipped.length > 0 && (
+    <details class="circuit__skipped">
+      <summary>{circuit.skipped.length} station{circuit.skipped.length > 1 ? "s" : ""} left out</summary>
+      <ul>
+        {circuit.skipped.map((s) => <li><strong>{s.name}</strong> — {s.reason}</li>)}
+      </ul>
+    </details>
+  )}
+</div>
+
+<style>
+  .circuit {
+    display: grid;
+    gap: 12px;
+  }
+  .circuit__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .circuit__item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "phase name min" "note note note";
+    gap: 4px 9px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .circuit__item:last-child {
+    border-bottom: 0;
+  }
+  @media (max-width: 420px) {
+    .circuit__item {
+      grid-template-columns: auto 1fr;
+      grid-template-areas: "phase name" "min note";
+    }
+  }
+  .circuit__phase {
+    grid-area: phase;
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .circuit__phase--warmup {
+    background: var(--amber-soft);
+  }
+  .circuit__phase--main {
+    background: var(--leaf-soft);
+  }
+  .circuit__phase--cooldown {
+    background: var(--sky-soft);
+  }
+  .circuit__name {
+    grid-area: name;
+    font-weight: 600;
+    font-size: 0.97rem;
+    text-decoration: none;
+  }
+  .circuit__name:hover {
+    text-decoration: underline;
+  }
+  .circuit__min {
+    grid-area: min;
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .circuit__note {
+    grid-area: note;
+    font-size: 0.82rem;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+  .circuit__total {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 2px solid var(--ink);
+    font-size: 0.88rem;
+  }
+  .circuit__skipped {
+    font-size: 0.86rem;
+    color: var(--ink-2);
+  }
+  .circuit__skipped ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+</style>

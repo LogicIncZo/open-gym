@@ -1,0 +1,270 @@
+---
+import Base from "../../layouts/Base.astro";
+import EquipmentArt from "../../components/EquipmentArt.astro";
+import EqCard from "../../components/EqCard.astro";
+import MuscleMap from "../../components/MuscleMap.astro";
+import MinutesTable from "../../components/MinutesTable.astro";
+import SafetyList from "../../components/SafetyList.astro";
+import SignboardBlock from "../../components/SignboardBlock.astro";
+import ShareRow from "../../components/ShareRow.astro";
+import { EQUIPMENT, inCategory } from "../../data/equipment";
+import { categoryMeta } from "../../data/types";
+import { sourceList } from "../../data/sources";
+import { parksWithStation } from "../../data/parks";
+import { u } from "../../lib/url";
+
+export function getStaticPaths() {
+  return EQUIPMENT.map((item) => ({ params: { id: item.id }, props: { item } }));
+}
+
+const { item } = Astro.props;
+const meta = categoryMeta(item.category);
+const related = inCategory(item.category).filter((e) => e.id !== item.id).slice(0, 3);
+const parks = parksWithStation(item.id);
+const srcs = sourceList(item.sources);
+const prevalenceLabel = { common: "In most parks", occasional: "In some parks", rare: "Rarely installed" } as const;
+const confidenceLabel = {
+  high: "High confidence",
+  moderate: "Moderate confidence",
+  low: "Low confidence",
+} as const;
+
+const sections = [
+  ["what", "What it is"],
+  ["muscles", "Muscles worked"],
+  ["how", "How to use it"],
+  ["mistakes", "Common mistakes"],
+  ["benefits", "What it is good for"],
+  ["minutes", "How long"],
+  ["overuse", "Too much of it"],
+  ["safety", "Safety check"],
+  ["progress", "Easier / harder"],
+  ["boards", "The park board audit"],
+  ["sources", "Sources"],
+];
+---
+
+<Base title={item.name} description={item.summary} path={`/equipment/${item.id}`} image={`/og/${item.id}.svg`}>
+  <div class="wrap">
+    <nav class="tiny muted" aria-label="Breadcrumb" style="padding-top:14px">
+      <a href={u("/equipment")}>Stations</a> › <a href={u(`/equipment/?cat=${item.category}`)}>{meta.label}</a> › {item.name}
+    </nav>
+
+    <header class="eqhead">
+      <div class="eqhead__art" style={`background:${meta.tint}`}>
+        <EquipmentArt id={item.id} alt={`Illustration of a ${item.name.toLowerCase()}`} />
+      </div>
+      <div>
+        <div class="eqhead__meta">
+          <span class="badge" style={`background:${meta.tint};border-color:${meta.ink};color:${meta.ink}`}>{meta.label}</span>
+          <span class="badge badge--quiet">{prevalenceLabel[item.prevalence]}</span>
+          <span class="badge badge--quiet">Level {item.difficulty}/5</span>
+          <span class="badge badge--quiet">{confidenceLabel[item.confidence]}</span>
+        </div>
+        <h1>{item.name}</h1>
+        {item.aliases.length > 0 && <p class="aliases">Also called: {item.aliases.join(" · ")}</p>}
+        <p class="eqhead__sum">{item.summary}</p>
+        <div class="eqhead__actions">
+          <a class="btn btn--sm" href="#how">How to use it</a>
+          <a class="btn btn--sm" href="#safety">Safety check</a>
+        </div>
+        <nav class="ondetail-toc" aria-label="On this page">
+          {sections.map(([id, label]) => <a href={`#${id}`}>{label}</a>)}
+        </nav>
+      </div>
+    </header>
+
+    <section class="detail-section" id="what">
+      <h2><span class="num">01</span> What it is</h2>
+      <div class="two-col">
+        <div>
+          <p>{item.description}</p>
+          <dl class="deflist">
+            <div><dt>Footprint</dt><dd>{item.footprint} of ground</dd></div>
+            <div><dt>Joints loaded</dt><dd>{item.joints.join(", ")}</dd></div>
+            <div><dt>Resistance</dt><dd>Bodyweight through a fixed path — you cannot add load</dd></div>
+            <div><dt>How common</dt><dd>{prevalenceLabel[item.prevalence]}</dd></div>
+          </dl>
+        </div>
+        <div class="callout callout--grey" style="align-self:start">
+          <p class="callout__title">Read this first</p>
+          <p class="small" style="margin-bottom:6px">
+            Park equipment is built to EN 16630 for adults and youths. It is not playground equipment,
+            it is not sized for children, and nobody is supervising it.
+          </p>
+          <p class="small" style="margin-bottom:0">
+            This page is general information, not medical advice.
+            <a href={u("/safety")}>Full safety notes →</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-section" id="muscles">
+      <h2><span class="num">02</span> Muscles worked</h2>
+      <MuscleMap primary={item.muscles.primary} secondary={item.muscles.secondary} />
+    </section>
+
+    <section class="detail-section" id="how">
+      <h2><span class="num">03</span> How to use it</h2>
+      <div class="two-col">
+        <div>
+          <h3>Setup</h3>
+          <ul class="prose" style="font-size:0.93rem">
+            {item.setup.map((s) => <li>{s}</li>)}
+          </ul>
+        </div>
+        <div>
+          <h3>The movement</h3>
+          <ol class="steps">
+            {item.howTo.map((s) => <li>{s}</li>)}
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-section" id="mistakes">
+      <h2><span class="num">04</span> Common mistakes</h2>
+      <ul class="mistakes">
+        {item.mistakes.map((m) => (
+          <li>
+            <span class="wrong">{m.wrong}</span>
+            <span class="fix">{m.fix}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="detail-section" id="benefits">
+      <h2><span class="num">05</span> What it is good for</h2>
+      <p class="small muted" style="margin-top:-4px">
+        Claims are graded: <span class="tier" data-tier="1">T1</span> well supported ·
+        <span class="tier" data-tier="2">T2</span> plausible, limited ·
+        <span class="tier" data-tier="3">T3</span> not supported
+      </p>
+      <ul class="benefits">
+        {item.benefits.map((b) => (
+          <li data-tier={b.tier}>
+            <span class="claim">{b.claim} <span class="tier" data-tier={b.tier}>T{b.tier}</span></span>
+            <span class="note">{b.note}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="detail-section" id="minutes">
+      <h2><span class="num">06</span> How long to spend</h2>
+      <MinutesTable item={item} />
+    </section>
+
+    <section class="detail-section" id="overuse">
+      <h2><span class="num">07</span> Too much of it</h2>
+      <div class="two-col">
+        <div class="card card--soft">
+          <h3 style="font-size:1rem">Soon after a session</h3>
+          <ul style="font-size:0.91rem;margin:0;padding-left:18px">
+            {item.overuse.acute.map((s) => <li>{s}</li>)}
+          </ul>
+        </div>
+        <div class="card card--soft">
+          <h3 style="font-size:1rem">With weeks of overuse</h3>
+          <ul style="font-size:0.91rem;margin:0;padding-left:18px">
+            {item.overuse.chronic.map((s) => <li>{s}</li>)}
+          </ul>
+        </div>
+      </div>
+      <div class="callout callout--amber" style="margin-top:14px">
+        <p class="callout__title">Warning signs to take seriously</p>
+        <ul class="small" style="margin:0;padding-left:18px">
+          {item.overuse.warning.map((s) => <li>{s}</li>)}
+        </ul>
+      </div>
+      <div class="callout" style="margin-top:10px">
+        <p class="callout__title">Do not use this station if</p>
+        <ul class="small" style="margin:0;padding-left:18px">
+          {item.overuse.avoidIf.map((s) => <li>{s}</li>)}
+        </ul>
+        <p class="tiny" style="margin:8px 0 0">
+          This list is not exhaustive. If you are pregnant, recovering from surgery or managing a
+          heart condition, ask a clinician before starting.
+        </p>
+      </div>
+    </section>
+
+    <section class="detail-section" id="safety">
+      <h2><span class="num">08</span> Safety check</h2>
+      <SafetyList item={item} />
+      <p class="tiny muted" style="margin-top:10px">
+        Broken or vandalised equipment is common in Indian parks. If something on this list has
+        failed, do not use the station — report it to the municipal park office or the local
+        ward office. <a href={u("/safety#report")}>Reporting template →</a>
+      </p>
+    </section>
+
+    <section class="detail-section" id="progress">
+      <h2><span class="num">09</span> Make it easier or harder</h2>
+      <div class="progress-pair">
+        <div class="card card--soft">
+          <h3 style="font-size:1rem">Easier</h3>
+          <p class="small" style="margin-bottom:0">{item.easier}</p>
+        </div>
+        <div class="card card--soft">
+          <h3 style="font-size:1rem">Harder</h3>
+          <p class="small" style="margin-bottom:0">{item.harder}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-section" id="boards">
+      <h2><span class="num">10</span> The park board audit</h2>
+      <SignboardBlock item={item} />
+    </section>
+
+    <section class="detail-section" id="sources">
+      <h2><span class="num">11</span> Sources</h2>
+      <ul class="sources">
+        {srcs.map((s) => (
+          <li>
+            <span class="src-label"><a href={s.url} rel="noopener noreferrer">{s.label}</a></span>
+            <span class="src-meta">{s.publisher} · {s.year} · {s.tier}</span>
+            {s.note && <span class="tiny muted">{s.note}</span>}
+          </li>
+        ))}
+      </ul>
+      <p class="tiny muted" style="margin-top:10px">
+        Confidence: <strong>{confidenceLabel[item.confidence]}</strong>. This reflects how much
+        direct evidence exists for the specific station, not how safe it is.
+        Page last reviewed as part of the site build; data changes are tracked in the repository.
+      </p>
+
+      {parks.length > 0 && (
+        <div style="margin-top:18px">
+          <h3 style="font-size:1rem">Listed in these parks</h3>
+          <ul class="small" style="margin:0;padding-left:18px">
+            {parks.map((p) => (
+              <li><a href={u(`/parks/${p.citySlug}/${p.slug}/`)}>{p.name}, {p.city}</a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+
+    <div class="section">
+      <div class="card">
+        <ShareRow text={`${item.name} — what it does, how long to use it, and what the park board gets wrong.`} label="Share this station" />
+      </div>
+    </div>
+
+    {related.length > 0 && (
+      <section class="section">
+        <div class="section__head">
+          <h2>Other {meta.label.toLowerCase()} stations</h2>
+          <a class="small" href={u(`/equipment/?cat=${item.category}`)}>See all →</a>
+        </div>
+        <div class="grid grid--3">
+          {related.map((r) => <EqCard item={r} />)}
+        </div>
+      </section>
+    )}
+  </div>
+</Base>

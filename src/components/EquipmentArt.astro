@@ -1,0 +1,26 @@
+---
+import { ART } from "../data/art";
+
+interface Props {
+  id: string;
+  alt: string;
+  class?: string;
+  ground?: boolean;
+}
+
+const { id, alt, class: cls = "", ground = true } = Astro.props;
+const art = ART[id] ?? "";
+---
+
+<svg
+  class={cls}
+  viewBox="0 0 240 160"
+  role="img"
+  aria-label={alt}
+  preserveAspectRatio="xMidYMid meet"
+>
+  {ground && (
+    <line x1="26" y1="134" x2="214" y2="134" stroke="#C8B593" stroke-width="4" stroke-linecap="round" />
+  )}
+  <Fragment set:html={art} />
+</svg>

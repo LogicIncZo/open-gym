@@ -1,0 +1,114 @@
+---
+import Base from "../layouts/Base.astro";
+import ShareRow from "../components/ShareRow.astro";
+import { EQUIPMENT } from "../data/equipment";
+import { GOALS } from "../lib/circuit";
+import { u } from "../lib/url";
+
+const mini = EQUIPMENT.map((e) => ({
+  id: e.id,
+  name: e.name,
+  category: e.category,
+  difficulty: e.difficulty,
+}));
+---
+
+<Base
+  title="Your park"
+  description="A shared park inventory: the stations present, a circuit built from them, and a printable sheet."
+  path="/park"
+  noindex
+>
+  <div class="wrap" data-parkview>
+    <div class="callout callout--amber" data-park-empty hidden style="margin-top:20px">
+      <p class="callout__title">No park in this link</p>
+      <p class="small" style="margin-bottom:8px" data-park-empty-msg>
+        This page reads a park from the link you opened. Build one first.
+      </p>
+      <a class="btn btn--sm btn--terra" href={u("/build")}>Build a park</a>
+    </div>
+
+    <div data-park-body hidden>
+      <nav class="tiny muted no-print" aria-label="Breadcrumb" style="padding-top:14px">
+        <a href={u("/parks")}>Parks</a> › Shared park
+      </nav>
+
+      <header class="park-head">
+        <p class="eyebrow" style="margin-bottom:4px">Shared park sheet</p>
+        <h1 style="margin-bottom:4px" data-park-title>Your park</h1>
+        <p class="muted" style="margin-bottom:0" data-park-sub>Reading the link…</p>
+      </header>
+
+      <div class="bld__layout section" style="margin-top:18px">
+        <div>
+          <div class="park-sheet">
+            <div class="row" style="justify-content:space-between;align-items:baseline">
+              <h2 style="font-size:1.3rem;margin:0">Stations on site</h2>
+              <span class="tiny muted" data-park-meta></span>
+            </div>
+            <ul class="stationlist" data-park-list style="margin-top:10px"></ul>
+            <p class="tiny muted" style="margin:12px 0 0">
+              Inventory supplied by whoever shared this link. It is a snapshot, not a live status —
+              check each frame before loading it.
+            </p>
+          </div>
+
+          <div class="park-sheet" style="margin-top:16px">
+            <h2 style="font-size:1.3rem">Suggested circuit</h2>
+            <p class="small muted">
+              Goal: <strong data-park-goal-label>general</strong>. Ordering and time limits come from
+              the general adult guidance on each station page.
+            </p>
+            <div data-park-circuit></div>
+            <p class="tiny muted" style="margin:12px 0 0">
+              General guidance, not medical advice. Stop on chest pain, dizziness or sharp joint pain
+              and seek help.
+            </p>
+          </div>
+
+          <div class="park-sheet print-sheet" style="margin-top:16px">
+            <h2 style="font-size:1.3rem">Take it with you</h2>
+            <div class="row">
+              <button class="btn btn--sm btn--primary" type="button" onclick="window.print()">Print this sheet</button>
+              <a class="btn btn--sm" data-rebuild href={u("/build")}>Edit the inventory</a>
+            </div>
+            <p class="tiny muted" style="margin:10px 0 0">
+              Printed <span data-park-date></span>. Open Gym · logicinczo.github.io/open-gym
+            </p>
+          </div>
+        </div>
+
+        <aside class="bld__side no-print">
+          <div class="card">
+            <h3 style="font-size:1rem">Share this park</h3>
+            <ShareRow text="Outdoor gym stations and a circuit, via Open Gym." />
+            <p class="tiny muted" style="margin:12px 0 0">
+              The link contains the full station list. Anyone who opens it sees the same park, with
+              no account and no server.
+            </p>
+          </div>
+
+          <div class="callout callout--grey" style="margin-top:14px">
+            <p class="callout__title">Where is this park?</p>
+            <p class="small" style="margin-bottom:0">
+              Shared links carry only what the builder typed. Add a locality when you build so the
+              person receiving it knows which ground this is.
+            </p>
+          </div>
+
+          <div class="card card--soft" style="margin-top:14px">
+            <h3 style="font-size:0.95rem">Circuit styles</h3>
+            <ul class="small muted" style="margin:0;padding-left:18px">
+              {GOALS.slice(0, 4).map((g) => <li><strong>{g.label}</strong> — {g.blurb}</li>)}
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" id="og-park-data" set:html={JSON.stringify(mini)} />
+  <script>
+    import "../scripts/parkview";
+  </script>
+</Base>

@@ -1,0 +1,69 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  image?: string;
+  noindex?: boolean;
+}
+import "../styles/global.css";
+import "../styles/pages.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import TabBar from "../components/TabBar.astro";
+import { u, BASE } from "../lib/url";
+
+const {
+  title,
+  description,
+  path = "/",
+  image = "/og/home.svg",
+  noindex = false,
+} = Astro.props;
+const site = Astro.site ?? new URL("https://logicinczo.github.io");
+const canonical = new URL(u(path), site).href;
+const ogImage = new URL(u(image), site).href;
+const fullTitle = title.includes("Open Gym") ? title : `${title} · Open Gym`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#f6efe0" />
+    <meta name="color-scheme" content="light" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href={u("/favicon.svg")} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={u("/favicon.svg")} />
+    <link rel="manifest" href={u("/manifest.webmanifest")} />
+    <script is:inline define:vars={{ base: BASE }}>
+      window.__BASE__ = base;
+    </script>
+    <script is:inline define:vars={{ sw: u("/sw.js") }}>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register(sw).catch(() => {});
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <TabBar />
+  </body>
+</html>

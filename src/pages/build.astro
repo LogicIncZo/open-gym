@@ -1,0 +1,179 @@
+---
+import Base from "../layouts/Base.astro";
+import { CATEGORIES } from "../data/types";
+import { EQUIPMENT, inCategory } from "../data/equipment";
+import { GOALS } from "../lib/circuit";
+import { u } from "../lib/url";
+
+const mini = EQUIPMENT.map((e) => ({
+  id: e.id,
+  name: e.name,
+  category: e.category,
+  difficulty: e.difficulty,
+  minutes: e.minutes.adult.perStation,
+}));
+---
+
+<Base
+  title="Build your park"
+  description="Tick the stations in your park and get a shareable park page, a QR code and a printable circuit sized to the time you have."
+  path="/build"
+>
+  <div class="wrap bld">
+    <p class="eyebrow">Park builder</p>
+    <h1 style="margin-bottom:0.25em">Make a page for your park</h1>
+    <p class="muted" style="max-width:62ch">
+      Tick what is actually installed. The park page, the circuit and the QR code are generated in
+      your browser — nothing is uploaded, and the link is the park. Share it with whoever else uses
+      the ground.
+    </p>
+
+    <div class="bld__layout section" data-builder style="margin-top:18px">
+      <div>
+        <div class="filterbar" style="position:static;box-shadow:none">
+          <div class="row" style="gap:14px">
+            <span class="badge badge--quiet">Step 1</span>
+            <strong style="font-family:var(--font-display);font-size:1.1rem">Choose the stations present</strong>
+          </div>
+          <span class="tiny muted">Not sure what something is called? <a href={u("/equipment")}>Open the catalogue</a></span>
+        </div>
+
+        {CATEGORIES.map((c) => {
+          const list = inCategory(c.id);
+          if (!list.length) return null;
+          return (
+            <div class="bld__group">
+              <h3 style={`border-left:6px solid ${c.ink};padding-left:9px`}>
+                {c.label} <span>{list.length}</span>
+              </h3>
+              <div class="picklist">
+                {list.map((e) => (
+                  <label class="pick">
+                    <input type="checkbox" data-station-id={e.id} value={e.id} />
+                    <span>
+                      {e.name}
+                      <small>Level {e.difficulty}/5 · {e.prevalence === "common" ? "common" : e.prevalence}</small>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        <noscript>
+          <div class="callout callout--amber" style="margin-top:18px">
+            <p class="callout__title">The builder needs JavaScript</p>
+            <p class="small" style="margin-bottom:0">
+              Everything is computed in the browser so no data is sent anywhere. You can still read
+              every station entry without it.
+            </p>
+          </div>
+        </noscript>
+      </div>
+
+      <aside class="bld__side">
+        <div class="card">
+          <span class="badge badge--quiet">Step 2</span>
+          <h3 style="margin:8px 0 12px;font-size:1.15rem">Name it and pick a goal</h3>
+
+          <div class="field">
+            <label for="park-name">Park name</label>
+            <input id="park-name" type="text" placeholder="e.g. Natesan Park" data-park-name maxlength="60" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="park-city">City</label>
+            <input id="park-city" type="text" placeholder="e.g. Chennai" data-park-city maxlength="40" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="park-locality">Locality</label>
+            <input id="park-locality" type="text" placeholder="e.g. Teynampet" data-park-locality maxlength="40" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="park-goal">Circuit style</label>
+            <select id="park-goal" data-park-goal>
+              {GOALS.map((g) => <option value={g.id}>{g.label} — {g.blurb}</option>)}
+            </select>
+          </div>
+
+          <div class="countline">
+            <span>Stations picked</span>
+            <strong data-count>0</strong>
+          </div>
+          <div class="countline" style="border-top:0;margin-top:-8px">
+            <span>Circuit length</span>
+            <strong data-total>0 min</strong>
+          </div>
+
+          <a class="btn btn--terra btn--block" data-open href="#" style="opacity:.5">
+            Open the park page
+          </a>
+          <div class="row" style="margin-top:8px">
+            <button class="btn btn--sm btn--block" type="button" data-copy disabled>Copy link</button>
+            <button class="btn btn--sm" type="button" data-clear>Clear</button>
+          </div>
+
+          <p class="tiny muted" style="margin:12px 0 0">
+            The link carries the whole inventory. It can get long with many stations, which is
+            normal — no server is involved.
+          </p>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="font-size:1rem">Your circuit so far</h3>
+          <div data-preview-list>
+            <p class="small muted" style="margin:0">Tick a few stations and a circuit appears here.</p>
+          </div>
+        </div>
+
+        <div class="callout callout--grey" style="margin-top:14px">
+          <p class="callout__title">Be a good recorder</p>
+          <p class="small" style="margin-bottom:0">
+            List only what you can see. Note anything broken: a missing pin, a split seat, a frame
+            that rocks. A wrong inventory is worse than no inventory.
+          </p>
+        </div>
+      </aside>
+
+      <div class="bldbar no-print">
+        <div>
+          <strong data-count-m>0</strong> stations
+          <span class="muted">· <span data-total-m>0 min</span></span>
+        </div>
+        <a class="btn btn--sm btn--terra" data-open-m href="#" aria-disabled="true" style="opacity:.5">Open park page</a>
+      </div>
+    </div>
+
+    <section class="section">
+      <h2>How the circuit is built</h2>
+      <div class="grid grid--3">
+        <div class="card card--flat">
+          <h3 style="font-size:1rem">Warm-up first</h3>
+          <p class="small muted" style="margin-bottom:0">
+            A cardio or mobility station opens the session. Two to three minutes, easy pace — the aim
+            is temperature, not effort.
+          </p>
+        </div>
+        <div class="card card--flat">
+          <h3 style="font-size:1rem">Alternate regions</h3>
+          <p class="small muted" style="margin-bottom:0">
+            Upper, lower, upper, lower. Alternating lets one area recover while the other works, so
+            the circuit keeps moving without a long rest.
+          </p>
+        </div>
+        <div class="card card--flat">
+          <h3 style="font-size:1rem">Cool-down last</h3>
+          <p class="small muted" style="margin-bottom:0">
+            A held mobility or balance station. Two minutes. This is the part everyone skips and the
+            part that keeps the next day comfortable.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="application/json" id="og-data" set:html={JSON.stringify(mini)} />
+  <script>
+    import "../scripts/builder";
+  </script>
+</Base>

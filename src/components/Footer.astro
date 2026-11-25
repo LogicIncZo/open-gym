@@ -1,0 +1,39 @@
+---
+import { u } from "../lib/url";
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap site-footer__grid">
+    <div>
+      <strong>Open Gym</strong> — an open, illustrated field guide to India's park gym equipment.
+      Content CC BY-SA 4.0, code MIT. No accounts, no tracking, no personal data.
+      <p class="tiny muted" style="margin-top:8px">
+        General information for healthy adults and supervised children. It is not medical advice.
+        If you have a heart, joint, pregnancy or balance condition, ask a doctor before using park equipment.
+      </p>
+    </div>
+    <div>
+      <h4>Browse</h4>
+      <ul>
+        <li><a href={u("/equipment")}>All 32 stations</a></li>
+        <li><a href={u("/build")}>Build a park circuit</a></li>
+        <li><a href={u("/parks")}>Park registry</a></li>
+        <li><a href={u("/safety")}>Safety &amp; inspection</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Take the data</h4>
+      <ul>
+        <li><a href={u("/data/equipment.json")}>equipment.json</a></li>
+        <li><a href={u("/data/equipment.csv")}>equipment.csv</a></li>
+        <li><a href={u("/data/equipment.duckdb")}>equipment.duckdb</a></li>
+        <li><a href={u("/about")}>Sources &amp; method</a></li>
+        <li><a href="https://github.com/LogicIncZo/open-gym">Source on GitHub</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap tiny muted" style="margin-top:20px">
+    © {year} LogicIncZo · Built as an open public good. Corrections welcome via GitHub issues.
+  </div>
+</footer>

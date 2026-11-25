@@ -1,0 +1,186 @@
+---
+import Base from "../layouts/Base.astro";
+import { u } from "../lib/url";
+---
+
+<Base
+  title="Safety and inspection"
+  description="How to check park gym equipment before you use it, what breaks, why children should not use adult fitness stations, and how to report a faulty machine."
+  path="/safety"
+>
+  <div class="wrap narrow" style="padding-top:22px">
+    <p class="eyebrow">Read before you train</p>
+    <h1>Safety and inspection</h1>
+    <p class="muted">
+      Outdoor gyms in India are installed, then left. There is usually no instructor, no inspection
+      log on the frame, and no one to ask. That makes your own two-minute check the only quality
+      control between you and a failed weld.
+    </p>
+
+    <div class="callout" style="margin-top:18px">
+      <p class="callout__title">This is general information, not medical advice</p>
+      <p class="small" style="margin-bottom:0">
+        If you have a heart condition, uncontrolled blood pressure, a recent joint or spine injury,
+        are pregnant, or are recovering from surgery, ask a clinician what is appropriate before
+        using park equipment.
+      </p>
+    </div>
+
+    <section class="detail-section">
+      <h2>Who the equipment is built for</h2>
+      <p>
+        Most outdoor fitness equipment sold in India follows — or copies — <strong>EN 16630</strong>,
+        the European standard for <em>outdoor fitness equipment</em>. That standard sizes stations for
+        adults and youths. It is not the playground standard.
+      </p>
+      <p>
+        Playground equipment for children is covered by <strong>EN 1176</strong>, which sets fall
+        heights, entrapment gaps and impact-absorbing surfacing. A monkey-bar frame or climbing net
+        in a park gym is usually installed to fitness-equipment assumptions, with none of the
+        playground requirements. This is why children's numbers on every station page are
+        conservative: <strong>12+ supervised</strong> for fitness stations, <strong>6+ or 8+</strong>
+        for balance and play, and under-5s excluded everywhere.
+      </p>
+      <div class="table-wrap" style="margin-top:14px">
+        <table>
+          <thead>
+            <tr><th>Station type</th><th>Who it is sized for</th><th>Our child guidance</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Press, pull, leg, core stations</td><td>Adults and youths</td><td>12+, supervised, short range</td></tr>
+            <tr><td>Mobility and stretch frames</td><td>Adults and youths</td><td>12+, supervised</td></tr>
+            <tr><td>Balance beam</td><td>Adults and youths</td><td>6+, adult within arm's reach, low beam</td></tr>
+            <tr><td>Monkey bars, climbing net</td><td>Play equipment, adult-sized</td><td>8+ / 6+, one child at a time, constant adult</td></tr>
+            <tr><td>Combo frames</td><td>Adults</td><td>12+, lowest stations only, adult present</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <h2>The two-minute check</h2>
+      <p>Do this every time, on every station, before you load it. It takes less time than one set.</p>
+      <ol class="steps">
+        <li><strong>Look at the ground.</strong> Loose sand, broken paving, standing water or exposed concrete under a station is a fall injury waiting. Move to a different station.</li>
+        <li><strong>Shake the frame.</strong> Put a hand on a post and push. Any rock, wobble or creak means the anchor has failed. Stop.</li>
+        <li><strong>Check every weld you can see.</strong> Rust streaks radiating from a weld, cracked paint or a visible gap are failure signs, not cosmetic wear.</li>
+        <li><strong>Work every moving part through its range</strong> — unloaded. Seat pins, press arms, footplates, swing arms. It should move smoothly, stop firmly, and not scrape.</li>
+        <li><strong>Check the seat and pads.</strong> Split padding exposes the frame edge. A seat that swivels or lifts when it should not is broken.</li>
+        <li><strong>Check the handles and grips.</strong> Spinning grips, missing end caps, rust burrs and split rubber all tear hands.</li>
+        <li><strong>Check for pinch points</strong> between moving arms, counterweights and the frame — especially on combo rigs where children may be nearby.</li>
+        <li><strong>Check the surface temperature</strong> on metal seats and bars in direct sun. They can exceed 60 °C in an Indian afternoon.</li>
+      </ol>
+    </section>
+
+    <section class="detail-section">
+      <h2>What actually breaks</h2>
+      <div class="two-col">
+        <div class="card card--soft">
+          <h3 style="font-size:1rem">Most common failures</h3>
+          <ul class="small" style="margin:0;padding-left:18px">
+            <li>Base anchor bolts loosening or corroding out</li>
+            <li>Seat-pin and adjustment mechanisms jamming or slipping</li>
+            <li>Padding splitting, then water entering the foam</li>
+            <li>Handle grips perishing in sun and rain</li>
+            <li>Bearings on wheels, discs and swing arms seizing</li>
+            <li>Weld cracking at the highest-stress joint</li>
+            <li>Sand or soil scouring away under footplates</li>
+          </ul>
+        </div>
+        <div class="card card--soft">
+          <h3 style="font-size:1rem">What makes it worse</h3>
+          <ul class="small" style="margin:0;padding-left:18px">
+            <li>No scheduled inspection after installation</li>
+            <li>Repainting over rust instead of treating it</li>
+            <li>Missing fasteners replaced with the wrong bolt</li>
+            <li>Vandalised padding left in place for months</li>
+            <li>Standing water and leaf litter holding moisture on frames</li>
+            <li>Stations installed on bare concrete</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <h2>Heat, rain and air</h2>
+      <ul>
+        <li><strong>Heat.</strong> Train before 9 am or after 5 pm in summer. Metal in direct sun can cause contact burns, and heat illness risk climbs fast. Drink water before you start — thirst is a late signal.</li>
+        <li><strong>Rain.</strong> Wet metal, wet sand and wet grips are the three ingredients of a fall. After rain, wait for the surface to dry and check that the ground under the station has not scoured out.</li>
+        <li><strong>Air.</strong> On high-pollution days, park exercise means breathing more of it. Shift to a low-intensity session, or move indoors.</li>
+        <li><strong>Evening light.</strong> Many parks have no lighting over the equipment. Uneven ground plus low light is a sprain risk; use the walking path instead.</li>
+      </ul>
+    </section>
+
+    <section class="detail-section" id="report">
+      <h2>How to report a broken station</h2>
+      <p>
+        In most Indian cities the outdoor gym belongs to the municipal corporation or the local park
+        department, not to a private gym operator. A short written complaint with a photograph is far
+        more effective than a phone call.
+      </p>
+      <div class="card card--flat">
+        <p class="small" style="margin-bottom:8px"><strong>Template — copy and adapt</strong></p>
+        <pre class="small" style="white-space:pre-wrap;font-family:var(--font-mono);margin:0;line-height:1.5">To: The Commissioner / Assistant Commissioner (Parks), [Municipal Corporation]
+Subject: Broken outdoor gym equipment at [park name], [locality] — injury risk
+
+Sir/Madam,
+
+The outdoor gym station at [park name], near [landmark], is damaged:
+
+  Station: [e.g. seated chest press]
+  Fault:   [e.g. base anchor bolts loose; frame rocks when pushed]
+  Risk:    [e.g. frame may topple under load]
+  First seen: [date]
+
+Photographs attached. The station is unmarked and continues to be used,
+including by children. Requesting that it be barricaded and repaired.
+
+Name:
+Phone:
+Date:</pre>
+      </div>
+      <p class="small muted" style="margin-top:10px">
+        If a station has already caused an injury, keep the photographs, note the date and time, and
+        get medical attention documented. That record matters more than the repair.
+      </p>
+    </section>
+
+    <section class="detail-section">
+      <h2>Stop and seek help if</h2>
+      <div class="callout" style="margin-bottom:10px">
+        <p class="callout__title">Call emergency services (108 in most states)</p>
+        <ul class="small" style="margin:0;padding-left:18px">
+          <li>Chest pain, pressure or tightness — especially with arm, jaw or back pain</li>
+          <li>Fainting, or sudden confusion</li>
+          <li>Sudden weakness or numbness on one side, facial droop, slurred speech</li>
+          <li>Severe breathlessness that does not settle on stopping</li>
+        </ul>
+      </div>
+      <div class="callout callout--amber">
+        <p class="callout__title">Stop the session and get checked</p>
+        <ul class="small" style="margin:0;padding-left:18px">
+          <li>Sharp joint pain that appears during a movement</li>
+          <li>Pain radiating down an arm or leg</li>
+          <li>A joint that feels unstable or “gives way”</li>
+          <li>Dizziness, visual changes or a pounding headache</li>
+          <li>Any fall from height, even if you feel fine</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <h2>Do not use park equipment if</h2>
+      <ul>
+        <li>You have chest pain, or a known unstable heart condition, without clearance</li>
+        <li>You are pregnant — seek advice, and avoid loaded spinal rotation, supine exercise and end-range stretching</li>
+        <li>You have an acute injury, a recent fracture, or surgery without clearance</li>
+        <li>You are intoxicated or severely sleep-deprived</li>
+        <li>The station is visibly damaged, wet, or installed over concrete</li>
+      </ul>
+      <div class="row" style="margin-top:16px">
+        <a class="btn btn--terra" href={u("/equipment")}>Find your station</a>
+        <a class="btn" href={u("/build")}>Build a park page</a>
+      </div>
+    </section>
+  </div>
+</Base>

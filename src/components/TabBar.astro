@@ -1,0 +1,37 @@
+---
+import { u } from "../lib/url";
+const here = Astro.url.pathname.replace(/^\/open-gym/, "").replace(/\/$/, "") || "/";
+const tabs = [
+  {
+    href: "/",
+    label: "Home",
+    icon: '<path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>',
+  },
+  {
+    href: "/equipment",
+    label: "Stations",
+    icon: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+  },
+  {
+    href: "/parks",
+    label: "Parks",
+    icon: '<path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  },
+  {
+    href: "/build",
+    label: "Build",
+    icon: '<path d="M4 20h16M6 20V9l6-5 6 5v11"/><path d="M10 20v-5h4v5"/>',
+  },
+];
+const active = (href: string) =>
+  href === "/" ? here === "/" : here === href || here.startsWith(href + "/");
+---
+
+<nav class="tabbar" aria-label="Sections">
+  {tabs.map((t) => (
+    <a href={u(t.href)} aria-current={active(t.href) ? "page" : undefined}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" set:html={t.icon} />
+      <span>{t.label}</span>
+    </a>
+  ))}
+</nav>

@@ -1,0 +1,16 @@
+---
+import Base from "../layouts/Base.astro";
+import { u } from "../lib/url";
+---
+
+<Base title="Not found" description="That page is not in the guide." path="/404" noindex>
+  <div class="wrap narrow" style="padding-top:40px;text-align:center">
+    <p class="eyebrow">404</p>
+    <h1>Wrong turn on the walking path</h1>
+    <p class="muted">That page does not exist. The stations, the park registry and the builder all do.</p>
+    <div class="row" style="justify-content:center;margin-top:18px">
+      <a class="btn btn--primary" href={u("/equipment")}>Browse stations</a>
+      <a class="btn" href={u("/")}>Home</a>
+    </div>
+  </div>
+</Base>

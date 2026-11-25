@@ -1,0 +1,98 @@
+---
+import Base from "../../layouts/Base.astro";
+import { PARKS } from "../../data/parks";
+import { byId } from "../../data/equipment";
+import { u } from "../../lib/url";
+
+const cities = Array.from(new Set(PARKS.map((p) => p.city))).sort();
+const totalStations = PARKS.reduce((t, p) => t + p.stations.length, 0);
+const flagged = PARKS.flatMap((p) => p.stations.filter((s) => s.condition === "poor" || s.condition === "broken"));
+---
+
+<Base
+  title="Park registry"
+  description="Community-maintained inventory of outdoor gyms: which stations are installed, what condition they are in, and a ready-made circuit for each park."
+  path="/parks"
+>
+  <div class="wrap" style="padding-top:22px">
+    <p class="eyebrow">The registry</p>
+    <h1 style="margin-bottom:0.3em">Park registry</h1>
+    <p class="muted" style="max-width:62ch">
+      Parks whose equipment has been listed, station by station. Each entry carries a condition
+      note and a circuit you can follow on the spot. {PARKS.length} park{PARKS.length === 1 ? "" : "s"},
+      {totalStations} station listings.
+    </p>
+
+    <div class="callout callout--amber" style="margin-top:16px">
+      <p class="callout__title">This registry is just starting</p>
+      <p class="small" style="margin-bottom:0">
+        Entries marked <strong>unverified</strong> were written from a walk-through and have not been
+        re-checked. Equipment changes; a station listed as working may be broken today.
+        Always check the machine in front of you.
+      </p>
+    </div>
+
+    <div class="row" style="margin:18px 0 4px">
+      <a class="btn btn--sm btn--terra" href={u("/build")}>Add your park</a>
+      <span class="tiny muted">No account needed — the park travels in the link.</span>
+    </div>
+
+    {flagged.length > 0 && (
+      <div class="callout callout--grey" style="margin-top:14px">
+        <p class="callout__title">{flagged.length} station{flagged.length === 1 ? "" : "s"} currently flagged</p>
+        <p class="small" style="margin-bottom:0">
+          {flagged.map((f) => byId(f.id)?.name ?? f.id).join(" · ")} — reported as poor or broken.
+          Do not use a station with a failed frame, missing pin or split padding.
+        </p>
+      </div>
+    )}
+
+    {cities.map((city) => (
+      <section class="section">
+        <div class="section__head">
+          <h2>{city}</h2>
+          <span class="small muted">{PARKS.filter((p) => p.city === city).length} park(s)</span>
+        </div>
+        <div class="grid grid--2">
+          {PARKS.filter((p) => p.city === city).map((p) => {
+            const poor = p.stations.filter((s) => s.condition === "poor" || s.condition === "broken").length;
+            return (
+              <a class="card" href={u(`/parks/${p.citySlug}/${p.slug}/`)} style="text-decoration:none;color:inherit">
+                <div class="row" style="justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <h3 style="margin-bottom:2px">{p.name}</h3>
+                    <p class="small muted" style="margin-bottom:0">{p.locality} · {p.city}</p>
+                  </div>
+                  <span class={`badge ${p.verified ? "badge--leaf" : "badge--quiet"}`}>
+                    {p.verified ? "Verified" : "Unverified"}
+                  </span>
+                </div>
+                <p class="small" style="margin:10px 0 0">
+                  {p.stations.length} stations · {p.surface}
+                </p>
+                <p class="row" style="margin:8px 0 0;gap:6px">
+                  {poor > 0
+                    ? <span class="cond cond--poor">{poor} needing attention</span>
+                    : <span class="cond cond--good">All listed working</span>}
+                  <span class="badge badge--quiet">{p.entry}</span>
+                </p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))}
+
+    <section class="section">
+      <div class="card card--soft">
+        <h3>Nothing near you yet?</h3>
+        <p class="small muted">
+          That is expected — the registry only holds what someone has walked and recorded. Use the
+          builder to make the first entry for your park: tick the stations, name it, and share the
+          link. When you are ready, open an issue on GitHub with the link and it can be added here.
+        </p>
+        <a class="btn btn--sm btn--primary" href={u("/build")}>Build a park page</a>
+      </div>
+    </section>
+  </div>
+</Base>

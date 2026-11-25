@@ -1,0 +1,22 @@
+{
+  "name": "open-gym",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Open Gym — an open-data field guide to India's outdoor park gym equipment.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^7.4.13",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/qrcode": "^1.5.6",
+    "typescript": "6"
+  }
+}

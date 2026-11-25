@@ -1,0 +1,158 @@
+---
+import Base from "../layouts/Base.astro";
+import { EQUIPMENT } from "../data/equipment";
+import { SOURCES } from "../data/sources";
+import { CATEGORIES } from "../data/types";
+import { u } from "../lib/url";
+
+const claims = EQUIPMENT.flatMap((e) => e.signboard);
+const byVerdict = {
+  supported: claims.filter((c) => c.verdict === "supported").length,
+  partly: claims.filter((c) => c.verdict === "partly").length,
+  unsupported: claims.filter((c) => c.verdict === "unsupported").length,
+};
+const sources = Object.values(SOURCES);
+---
+
+<Base
+  title="About Open Gym"
+  description="What this guide is, how the recommendations and claim audits were produced, what the data licence is, and what it deliberately does not do."
+  path="/about"
+>
+  <div class="wrap narrow" style="padding-top:22px">
+    <p class="eyebrow">About</p>
+    <h1>An honest manual for a machine with no manual</h1>
+    <p class="muted">
+      India installed outdoor gyms at scale and shipped them without instructions. The result is a
+      park full of equipment that people use by imitation, on frames nobody inspects, guided by
+      plaques that promise things exercise cannot deliver. Open Gym is an attempt to write the
+      missing manual — openly, and with the evidence showing.
+    </p>
+
+    <div class="hero__strip" style="margin-top:22px">
+      <div class="hero__stat"><strong>{EQUIPMENT.length}</strong><span>stations</span></div>
+      <div class="hero__stat"><strong>{CATEGORIES.length}</strong><span>categories</span></div>
+      <div class="hero__stat"><strong>{claims.length}</strong><span>claims audited</span></div>
+      <div class="hero__stat"><strong>{sources.length}</strong><span>sources</span></div>
+    </div>
+
+    <section class="detail-section">
+      <h2>What is in here</h2>
+      <p>
+        Every station entry answers the same questions in the same order: what the machine is, which
+        muscles it loads, how to set it up, how to move on it, the mistakes that cause most injuries,
+        what it is genuinely good for, how long to spend, what overuse looks like, what to inspect,
+        how to progress, and what the park board gets wrong.
+      </p>
+      <p>
+        Illustrations are hand-drawn SVG schematics rather than photographs. They render sharply at
+        any width, work offline, and carry no copyright or model-release problems — which matters for
+        a guide meant to be copied and printed.
+      </p>
+    </section>
+
+    <section class="detail-section">
+      <h2>How the claim audit works</h2>
+      <p>
+        Indian park equipment routinely carries plaques claiming waist reduction, height increase,
+        fat burning from specific body parts, and cures for back pain. We collected
+        {claims.length} such claims and graded each one:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Verdict</th><th>Count</th><th>Means</th></tr></thead>
+          <tbody>
+            <tr><td><span class="verdict verdict--supported">Supported</span></td><td>{byVerdict.supported}</td><td>The station plausibly delivers this, within limits stated in the entry.</td></tr>
+            <tr><td><span class="verdict verdict--partly">Partly true</span></td><td>{byVerdict.partly}</td><td>Directionally right, but overstated or conditional — the entry says where the limit is.</td></tr>
+            <tr><td><span class="verdict verdict--unsupported">Not supported</span></td><td>{byVerdict.unsupported}</td><td>False, or no plausible mechanism. Marked even when the station itself is useful.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top:10px">
+        A “not supported” verdict is about the claim, not the machine. The sit-up board is a fine
+        place to train trunk flexion; it still does not remove belly fat.
+      </p>
+    </section>
+
+    <section class="detail-section">
+      <h2>How recommendations are built</h2>
+      <ul>
+        <li><strong>Sets and repetitions</strong> follow novice resistance-training guidance: 2–3 sets of 8–12 at moderate effort, with 48 hours between hard sessions on the same muscle group.</li>
+        <li><strong>Weekly volume</strong> is framed against the WHO guideline — 150–300 minutes of moderate activity plus two muscle-strengthening days for adults; 60 minutes a day on average for ages 5–17.</li>
+        <li><strong>Children's bands</strong> come from equipment standards, not fitness enthusiasm: EN 16630 covers adult and youth fitness equipment, EN 1176 covers playground fall height and entrapment. A park gym is the former.</li>
+        <li><strong>Overuse patterns</strong> follow load-management principles: tendon pain tracks load spikes, and shoulder positions at end-range are the ones that provoke impingement.</li>
+      </ul>
+      <p class="small muted">
+        The times on each page are programming suggestions, not prescriptions. They assume a healthy
+        adult who has not trained much. Start lower than you think you need.
+      </p>
+    </section>
+
+    <section class="detail-section">
+      <h2>Confidence, and what it means</h2>
+      <p>
+        Each station carries a confidence label. It reflects how much direct evidence exists for
+        that specific machine — not how safe it is, and not how strongly we feel about it.
+      </p>
+      <dl class="deflist">
+        <div><dt>High</dt><dd>The movement pattern and the station are well described in standard guidance or equipment literature.</dd></div>
+        <div><dt>Moderate</dt><dd>The pattern is well understood, but the specific station or its typical Indian installation is less documented.</dd></div>
+        <div><dt>Low</dt><dd>Limited direct evidence; we say so rather than inventing certainty.</dd></div>
+      </dl>
+    </section>
+
+    <section class="detail-section">
+      <h2>Limits</h2>
+      <ul>
+        <li>This is not medical advice, physiotherapy, or a substitute for being taught a movement by a person.</li>
+        <li>It does not know your body. A station marked safe for most adults can be wrong for you.</li>
+        <li>The park registry starts from walks, not surveys. Unverified entries are snapshots and equipment changes.</li>
+        <li>Equipment varies. Two “chest press” stations from different manufacturers can have different pivots, ranges and loads. The entry describes the type, not your specific frame.</li>
+        <li>It is India-focused in context — municipal maintenance, heat, monsoon, park culture — but the exercise guidance is drawn from international sources.</li>
+      </ul>
+    </section>
+
+    <section class="detail-section">
+      <h2>Data and licence</h2>
+      <p>
+        The full catalogue is downloadable as <a href={u("/data/equipment.json")}>JSON</a>,
+        <a href={u("/data/equipment.csv")}>CSV</a> and
+        <a href={u("/data/equipment.duckdb")}>DuckDB</a> (tables: equipment, benefits,
+        signboard_claims, parks). Content is licensed CC BY-SA 4.0; the code is MIT.
+        Reuse it, translate it, print it for a park noticeboard — attribute it and keep the licence.
+      </p>
+      <p>
+        Corrections are the point. If a claim audit is wrong, a time is unsafe, or a station is
+        missing, open an issue on
+        <a href="https://github.com/LogicIncZo/open-gym">GitHub</a> with the station id and the source.
+        Contested entries get the disagreement written into the page rather than quietly edited out.
+      </p>
+    </section>
+
+    <section class="detail-section">
+      <h2>Sources</h2>
+      <ul class="sources">
+        {sources.map((s) => (
+          <li>
+            <span class="src-label"><a href={s.url} rel="noopener noreferrer">{s.label}</a></span>
+            <span class="src-meta">{s.publisher} · {s.year} · {s.tier}</span>
+            {s.note && <span class="tiny muted">{s.note}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="detail-section">
+      <h2>Who made it</h2>
+      <p>
+        Open Gym is a LogicIncZo public-good project, built to be forked and localised. It has no
+        accounts, no analytics and no advertising. The whole park-builder runs in your browser: the
+        inventory travels in the link, and nothing is stored.
+      </p>
+      <div class="row">
+        <a class="btn btn--terra" href={u("/equipment")}>Browse stations</a>
+        <a class="btn" href={u("/build")}>Build a park</a>
+      </div>
+    </section>
+  </div>
+</Base>

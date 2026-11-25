@@ -1,0 +1,71 @@
+---
+import type { Equipment } from "../data/types";
+
+interface Props {
+  item: Equipment;
+}
+const { item } = Astro.props;
+---
+
+<div class="safety">
+  <div class="safety__col">
+    <h3 class="safety__head"><span class="dot" style="color:var(--leaf)"></span> Check before</h3>
+    <ul>
+      {item.safety.before.map((s) => <li>{s}</li>)}
+    </ul>
+  </div>
+  <div class="safety__col">
+    <h3 class="safety__head"><span class="dot" style="color:var(--amber)"></span> While using</h3>
+    <ul>
+      {item.safety.during.map((s) => <li>{s}</li>)}
+    </ul>
+  </div>
+  <div class="safety__col safety__col--stop">
+    <h3 class="safety__head"><span class="dot" style="color:var(--terra)"></span> Stop if</h3>
+    <ul>
+      {item.safety.stopIf.map((s) => <li>{s}</li>)}
+    </ul>
+  </div>
+  <div class="safety__col">
+    <h3 class="safety__head"><span class="dot" style="color:var(--ink-3)"></span> What wears out</h3>
+    <ul>
+      {item.maintenance.map((s) => <li>{s}</li>)}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .safety {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+  .safety__col {
+    background: var(--paper-2);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .safety__col--stop {
+    border-color: var(--terra);
+    background: #fdf3ee;
+  }
+  .safety__head {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 8px;
+  }
+  .safety__col ul {
+    margin: 0;
+    padding-left: 17px;
+    font-size: 0.9rem;
+    display: grid;
+    gap: 5px;
+  }
+</style>

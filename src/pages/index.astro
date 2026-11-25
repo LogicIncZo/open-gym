@@ -1,0 +1,155 @@
+---
+import Base from "../layouts/Base.astro";
+import EqCard from "../components/EqCard.astro";
+import EquipmentArt from "../components/EquipmentArt.astro";
+import { CATEGORIES } from "../data/types";
+import { EQUIPMENT, inCategory } from "../data/equipment";
+import { u } from "../lib/url";
+
+const featured = ["air-walker", "chest-press", "leg-press", "twister", "pull-up-bar", "balance-beam"]
+  .map((id) => EQUIPMENT.find((e) => e.id === id))
+  .filter((e) => Boolean(e));
+
+const total = EQUIPMENT.length;
+const common = EQUIPMENT.filter((e) => e.prevalence === "common").length;
+const claims = EQUIPMENT.flatMap((e) => e.signboard);
+const falseClaims = claims.filter((c) => c.verdict === "unsupported").length;
+---
+
+<Base
+  title="Open Gym — a field guide to India's park gym equipment"
+  description="What each outdoor gym station actually does, how long to use it, who should avoid it, and which claims on the park board are false. 32 illustrated stations, free and open data."
+  path="/"
+>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero__grid">
+        <div>
+          <p class="eyebrow">Open field guide · India</p>
+          <h1>Every park gym station, explained honestly.</h1>
+          <p class="hero__lede">
+            India has tens of thousands of open-air gyms. Almost none of them come with usable
+            instructions. This guide covers {total} stations — what they train, how long to spend,
+            what goes wrong, and which of the promises painted on the frame are simply false.
+          </p>
+          <div class="row" style="margin-top:16px">
+            <a class="btn btn--primary" href={u("/equipment")}>Browse the stations</a>
+            <a class="btn" href={u("/build")}>Build your park</a>
+          </div>
+        </div>
+        <div class="hero__art">
+          <EquipmentArt id="multi-gym" alt="Illustration of a multi-station park gym frame" />
+        </div>
+      </div>
+
+      <div class="hero__strip">
+        <div class="hero__stat"><strong>{total}</strong><span>stations</span></div>
+        <div class="hero__stat"><strong>{common}</strong><span>found in most parks</span></div>
+        <div class="hero__stat"><strong>{claims.length}</strong><span>board claims audited</span></div>
+        <div class="hero__stat"><strong>{falseClaims}</strong><span>of them unsupported</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <h2>Start here</h2>
+ 	    <a class="small" href={u("/safety")}>Safety first →</a>
+      </div>
+      <div class="grid grid--3">
+        <div class="card card--flat">
+          <p class="badge badge--terra">1</p>
+          <h3 style="margin-top:8px">Find your station</h3>
+          <p class="small muted" style="margin-bottom:0">
+            Thirty-two illustrated entries, grouped by what they train. Each one has setup, technique
+            and the mistakes that cause most park injuries.
+          </p>
+        </div>
+        <div class="card card--flat">
+          <p class="badge badge--amber">2</p>
+          <h3 style="margin-top:8px">Check the minutes</h3>
+          <p class="small muted" style="margin-bottom:0">
+            Sets, rest and supervision bands for adults and children — separated, because a park
+            station is sized for adults and most children should not be on it.
+          </p>
+        </div>
+        <div class="card card--flat">
+          <p class="badge badge--leaf">3</p>
+          <h3 style="margin-top:8px">Share your park</h3>
+          <p class="small muted" style="margin-bottom:0">
+            Tick the stations in your park, add its name, and get a link, QR code and printable
+            circuit you can hand to a neighbour.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <h2>Browse by what it trains</h2>
+      </div>
+      <div class="catgrid">
+        {CATEGORIES.map((c) => (
+          <a class="cattile" href={u(`/equipment/?cat=${c.id}`)} style={`border-left:8px solid ${c.ink}`}>
+            <em>{inCategory(c.id).length} stations</em>
+            <b>{c.label}</b>
+            <span>{c.blurb}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section__head">
+        <h2>Six stations you will recognise</h2>
+        <a class="small" href={u("/equipment")}>All {total} →</a>
+      </div>
+      <div class="grid grid--3">
+        {featured.map((item) => item && <EqCard item={item} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="callout callout--amber">
+        <p class="callout__title">The board is not the manual</p>
+        <p style="margin-bottom:8px">
+          Indian park equipment is routinely sold with plaques promising fat loss from the waist,
+          extra height from hanging, and cures for back pain. We checked
+          {claims.length} such claims against published guidance and reviews:
+          <strong>{falseClaims} are not supported</strong>.
+        </p>
+        <p class="small" style="margin-bottom:0">
+          Each station page lists the claims made about it and what the evidence actually says.
+          <a href={u("/about")}>How we audit claims →</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="card" style="display:grid;gap:14px">
+        <div>
+          <p class="eyebrow" style="margin-bottom:4px">No accounts. No tracking.</p>
+          <h2 style="margin-bottom:6px">Make a page for your park</h2>
+          <p class="muted" style="max-width:60ch;margin-bottom:0">
+            Tick what is actually installed, note what is broken, and the guide builds a warm-up →
+            main → cool-down circuit sized to the time you have. The whole park travels in the link —
+            there is no server and no database.
+          </p>
+        </div>
+        <div class="row">
+          <a class="btn btn--terra" href={u("/build")}>Build a park page</a>
+          <a class="btn" href={u("/parks")}>See the park registry</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

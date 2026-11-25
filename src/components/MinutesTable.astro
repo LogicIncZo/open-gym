@@ -1,0 +1,45 @@
+---
+import type { Equipment } from "../data/types";
+
+interface Props {
+  item: Equipment;
+}
+const { item } = Astro.props;
+---
+
+<div class="minutes">
+  <div class="table-wrap">
+    <table>
+      <caption class="sr-only">Suggested time and sets at {item.name}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Who</th>
+          <th scope="col">How much</th>
+          <th scope="col">Rest</th>
+          <th scope="col">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Adult</th>
+          <td>{item.minutes.adult.perStation}</td>
+          <td>{item.minutes.adult.rest}</td>
+          <td>{item.minutes.adult.sets} sets at this station</td>
+        </tr>
+        <tr>
+          <th scope="row">Child</th>
+          <td>{item.minutes.child.perStation}</td>
+          <td>—</td>
+          <td>
+            <strong>{item.minutes.child.band}</strong> · {item.minutes.child.supervision}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tiny muted" style="margin:8px 0 0">
+    These are programming suggestions from general adult guidelines, not prescriptions. Start at
+    the low end, keep 48 hours between hard sessions on the same muscles, and stop while you still
+    feel you could do more. Children's numbers are supervision bands, not targets.
+  </p>
+</div>

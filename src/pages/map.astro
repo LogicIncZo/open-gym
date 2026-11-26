@@ -585,6 +585,15 @@ const openUnrecorded = stats.reduce((n, s) => n + s.openGymUnrecorded, 0);
     padding: 0.45rem 0.6rem;
     border-radius: 8px;
   }
+  @media (max-width: 859px) {
+    .legend {
+      bottom: 2.6rem;
+    }
+    .chips--filters {
+      -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+      mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+    }
+  }
   @media (min-width: 860px) {
     .sheet {
       left: auto;

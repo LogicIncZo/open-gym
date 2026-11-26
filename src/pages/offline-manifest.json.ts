@@ -11,6 +11,7 @@ const routes = [
   "/build/",
   "/park/",
   "/map/",
+  "/contribute/",
   "/data/parks.geojson",
   "/safety/",
   "/about/",

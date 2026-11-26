@@ -100,8 +100,11 @@ const validate = (raw: any): { report?: Record<string, unknown>; photo?: Buffer;
   need(/^[a-z0-9-]{2,40}$/.test(citySlug), "citySlug", "unknown city");
   need(/^[a-z0-9-]{2,80}$/.test(parkSlug), "parkSlug", "unknown park");
   need(parkName.length >= 2, "parkName", "park name is empty");
-  need(Number.isFinite(lat) && lat > 6 && lat < 38, "fix.lat", "latitude out of range");
-  need(Number.isFinite(lon) && lon > 68 && lon < 98, "fix.lon", "longitude out of range");
+  // A fix is optional. Without one the report is still valid, it is simply not
+  // a field verification — so a walker whose browser blocks location can post.
+  const gaveFix = raw?.fix != null;
+  need(!gaveFix || (Number.isFinite(lat) && lat > 6 && lat < 38), "fix.lat", "latitude out of range");
+  need(!gaveFix || (Number.isFinite(lon) && lon > 68 && lon < 98), "fix.lon", "longitude out of range");
   need(Number.isFinite(parkLat) && Number.isFinite(parkLon), "park", "park coordinates missing");
 
   const stations = Array.isArray(raw?.stations) ? raw.stations : [];
@@ -122,7 +125,7 @@ const validate = (raw: any): { report?: Record<string, unknown>; photo?: Buffer;
   }
 
   const distance =
-    Number.isFinite(lat) && Number.isFinite(lon) && Number.isFinite(parkLat) && Number.isFinite(parkLon)
+    gaveFix && Number.isFinite(lat) && Number.isFinite(lon) && Number.isFinite(parkLat) && Number.isFinite(parkLon)
       ? Math.round(metres(parkLat, parkLon, lat, lon))
       : null;
 

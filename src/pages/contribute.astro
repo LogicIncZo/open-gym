@@ -587,9 +587,11 @@ const AMENITY_ROWS = [
       parkSlug: target.slug,
       parkName: target.name,
       park: { lat: target.lat, lon: target.lon },
+      /* No fix means no fix. Never substitute the park's own pin — that would
+         read as a zero-distance field verification the walker never made. */
       fix: state.fix
         ? { lat: state.fix.lat, lon: state.fix.lon, accuracy: state.fix.accuracy }
-        : { lat: target.lat, lon: target.lon, accuracy: null },
+        : null,
       stations: [...state.stations].map(([id, condition]) => ({ id, condition })),
       amenities,
       notes: $("notes").value.trim() || null,

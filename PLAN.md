@@ -486,18 +486,26 @@ A park reverts to staleness (`staleSince`) after 12 months without verification.
 
 | Phase | Scope | Estimate |
 |---|---|---|
-| M0 | `osm-crosswalk.json`; park schema v2 + migration; seed script for one city; `parks.geojson` in the build | 1.5 days |
-| M1 | `/map` with filters, locate-me, park sheet, offline layer | 2 days |
-| M2 | `/contribute` capture flow + GitHub issue queue + `scripts/review.py` + reports (fixed answers) | 2–3 days |
+| M0 | `osm-crosswalk.json`; park schema v2 + migration; seed script for one city; `parks.geojson` in the build — **shipped 2026-11-26** | 1.5 days |
+| M1 | `/map` with filters, locate-me, park sheet, offline layer — **shipped 2026-11-26** | 2 days |
+| M2 | `/contribute` capture flow + endpoint intake + `scripts/moderate.py` — **shipped 2026-11-26** | 2–3 days |
 | M3 | Field-verify one zone (20–30 parks), `/coverage`, `/reports`, OSM changeset export | 2 days |
 | M4 | Delta sync, second city, Tamil/Hindi labels, steward accounts-by-claim (optional) | ongoing |
 
 M0–M1 gives a shareable map. M2 is what makes it crowdsourced. M3 is what makes it trustworthy.
 
-## 23. Decisions needed
+## 23. Decisions taken (2026-11-26)
 
-1. **Seed city to field-verify first** — Chennai (existing demo record, GCC data) or Hyderabad (where the reference came from). Both can be seeded; only one gets walked first.
-2. **Report intake for v1** — GitHub issue queue (zero infra, needs a GitHub account to submit) vs a tiny endpoint (works for anyone, needs a host). Recommendation: GitHub for the full-record track, endpoint for the tap-only report track, because the tap track is the one that has to work for a walker with no account.
+1. **Seed city** — Hyderabad first, expanded city by city. Seeded: 323 named parks and playgrounds from OpenStreetMap across 17.15–17.60 N, 78.20–78.65 E.
+2. **Layers** — separate, not one undifferentiated dot layer: parks (documented / OSM open gym / plain), playgrounds as their own layer, and recorded stations. Amenity chips (toilets, drinking water) are filters over the park layer, not layers of their own.
+3. **Scope of "public park"** — only publicly accessible parks, including paid-entry ones. Paid entry is recorded as a `kind` of public park so a ticketed botanical garden is not excluded; wholly private/commercial sites are out.
+4. **Verification** — anonymous. No account, no email. A GPS fix within 150 m of the park pin files the report as `field-verified` on its own; anything else is `self-declared`. The radius is applied server-side, never in the browser.
+5. **Photos** — optional, accepted with explicit consent, re-encoded through a canvas and then stripped again server-side by segment (`services/intake/strip-meta.ts`) so a direct POST cannot carry camera GPS either.
+
+## 24. Open decisions
+
+1. **Which Hyderabad zone gets walked first** — the survey queue is published per city; the first 20–30 recorded parks should come from one contiguous zone so the coverage page has something to show.
+2. **Second city** — Chennai carries the demonstration record and the GCC parks register; Bengaluru has the Commons photo set. Either is a one-command seed once someone will walk it.
 3. **Publish-to-OSM on approval** — auto-generate the changeset fragment for the reviewer to upload, or leave OSM entirely to the contributor. Recommendation: generate it, human uploads. Never auto-upload to OSM.
 4. **Scope of `kind`** — parks only, or also playgrounds, lakefronts and median green. Recommendation: include them; residents do not distinguish, and a lakefront walk is the same use case.
 
@@ -604,17 +612,3 @@ This is the argument for the project stated as a number: the largest open-data s
 - **Delta sync / IndexedDB cursor** (§19). The full GeoJSON is 346 features and compresses small; the delta machinery is not worth it until a second city is dense.
 - **Publish-to-OSM changeset export** (#23.3). Deferred, not dropped — and when it lands it must stay human-uploaded.
 - **Municipal park lists.** GHMC publishes no machine-readable list worth matching against; the OSM set is the honest starting canvas.
-
----
-
-## Decisions taken 2026-11-26 — the crowdsourced layer
-
-The reference model is `maps.reclaimchennai.city` (crowdsourced, one city, layers, shareable). Applied here:
-
-1. **One city first.** Hyderabad seeds the canvas; other cities are added only when someone commits to walking them. The city page publishes how much is actually known, and the survey queue names the unrecorded parks instead of hiding them.
-2. **Layers are separate surfaces, not one map.** The park canvas (OSM), recorded station layer, and play-equipment layer toggle independently, so a playground is not mistaken for a gym and an OSM gym tag is not mistaken for a survey.
-3. **Only public parks.** Municipal, panchayat and paid-entry parks are all in scope — a paid entry park is a public park with a ticket. Club and residential-association gyms are out of scope; anything gated behind membership is not a public facility.
-4. **Anonymous verification on a GPS fix.** No account is the design, not a gap: a fix within 150 m of the park pin files the report as `field-verified`. The comparison happens server-side so the claim cannot be set by editing the request.
-5. **Photos are optional and metadata-free.** Canvas re-encode in the browser, segment stripping on the server, refusal rather than storage when stripping fails.
-
-The honest baseline this produced: 323 named parks in Hyderabad, 1 open gym tagged in OSM with no station detail, 0 with a station listing. That zero is the point — a crowdsourced map is worth building precisely where the official record is empty, and the map must say so rather than fill the gap with inference.

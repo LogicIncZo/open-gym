@@ -1,0 +1,599 @@
+---
+import Base from "../layouts/Base.astro";
+import TabBar from "../components/TabBar.astro";
+import { u } from "../lib/url";
+import { cityStats, CITIES, cityLabel, VERIFY_LABEL, type VerificationLevel } from "../data/parks";
+
+const cities = CITIES.filter((c) => cityStats(c).total > 0);
+const stats = cities.map((c) => ({ slug: c, label: cityLabel(c), ...cityStats(c) }));
+const total = stats.reduce((n, s) => n + s.total, 0);
+const documented = stats.reduce((n, s) => n + s.documented, 0);
+const openUnrecorded = stats.reduce((n, s) => n + s.openGymUnrecorded, 0);
+---
+
+<Base
+  title="Park map — Open Gym"
+  description="Every public park we know about, with the ones that carry open gym equipment marked. Filter by city, toilets, water and play equipment. Add what you find."
+>
+  <main class="map-page">
+    <div class="map-shell">
+      <div id="map" class="map" role="application" aria-label="Map of public parks"></div>
+
+      <div class="map-top">
+        <div class="map-search">
+          <input
+            id="q"
+            type="search"
+            placeholder="Search a park name…"
+            autocomplete="off"
+            aria-label="Search parks by name"
+          />
+        </div>
+        <div class="chips" role="group" aria-label="Filter cities">
+          <button class="chip is-on" data-city="all">All</button>
+          {cities.map((c) => <button class="chip" data-city={c}>{cityLabel(c)}</button>)}
+        </div>
+        <div class="chips chips--filters" role="group" aria-label="Filters">
+          <button class="chip chip--t" data-filter="gym" aria-pressed="false">Equipment recorded</button>
+          <button class="chip chip--t" data-filter="openGym" aria-pressed="false">Open gym in OSM</button>
+          <button class="chip chip--t" data-filter="toilets" aria-pressed="false">Toilets</button>
+          <button class="chip chip--t" data-filter="water" aria-pressed="false">Drinking water</button>
+          <button class="chip chip--t" data-filter="play" aria-pressed="false">Play equipment</button>
+        </div>
+      </div>
+
+      <div class="legend" aria-hidden="true">
+        <span><i class="dot dot--doc"></i>equipment recorded</span>
+        <span><i class="dot dot--open"></i>open gym tagged, not recorded</span>
+        <span><i class="dot dot--park"></i>park, no equipment known</span>
+      </div>
+
+      <div id="sheet" class="sheet" hidden>
+        <button class="sheet__x" id="sheet-close" aria-label="Close">×</button>
+        <div id="sheet-body"></div>
+      </div>
+
+      <div id="map-fallback" class="fallback" hidden>
+        <p>
+          The map tiles didn't load. Park records still work offline — use the
+          <a href={u("/parks")}>park list</a>, or retry.
+        </p>
+        <button id="retry" class="btn btn--ghost">Retry map</button>
+      </div>
+    </div>
+
+    <section class="map-foot">
+      <div class="map-foot__stats">
+        <div><b>{total.toLocaleString("en-IN")}</b><span>parks on the map</span></div>
+        <div><b>{documented}</b><span>with equipment recorded</span></div>
+        <div><b>{openUnrecorded}</b><span>tagged as an open gym, not yet recorded</span></div>
+      </div>
+      <p class="map-foot__note">
+        Every dot is a park someone mapped in OpenStreetMap. A dot is not a claim
+        that a gym is there. {VERIFY_LABEL["osm-import"]} means nobody has walked
+        the park for this record yet.
+      </p>
+      <a class="btn" href={u("/contribute")}>Record what you find →</a>
+    </section>
+  </main>
+  <TabBar />
+
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+  />
+  <script is:inline src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script is:inline define:vars={{ GEO: u("/data/parks.geojson"), CONTRIBUTE: u("/contribute") }}>
+    (function () {
+      var mapEl = document.getElementById("map");
+      var fallback = document.getElementById("map-fallback");
+      if (!window.maplibregl) {
+        fallback.hidden = false;
+        return;
+      }
+
+      var active = { city: "all", gym: false, openGym: false, toilets: false, water: false, play: false };
+      var q = "";
+
+      var map = new maplibregl.Map({
+        container: "map",
+        style: "https://tiles.openfreemap.org/styles/positron",
+        center: [78.42, 17.4],
+        zoom: 10.6,
+        attributionControl: { compact: true },
+      });
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+      map.addControl(
+        new maplibregl.GeolocateControl({
+          positionOptions: { enableHighAccuracy: true },
+          trackUserLocation: false,
+          showAccuracyCircle: false,
+        }),
+        "bottom-right",
+      );
+
+      map.on("error", function (e) {
+        if (e && e.error && !map.isStyleLoaded()) fallback.hidden = false;
+      });
+
+      var COLORS = {
+        doc: "#b04a28",
+        open: "#b8860b",
+        park: "#8d8778",
+        play: "#3f6f5f",
+      };
+
+      function filters() {
+        var f = ["all"];
+        if (active.city !== "all") f.push(["==", ["get", "city"], active.city]);
+        if (active.gym) f.push([">", ["get", "stations"], 0]);
+        if (active.openGym) f.push(["==", ["get", "openGym"], true]);
+        if (active.toilets) f.push(["==", ["get", "toilets"], true]);
+        if (active.water) f.push(["==", ["get", "water"], true]);
+        if (q) f.push(["in", q, ["downcase", ["get", "name"]]]);
+        return f.length > 1 ? f : null;
+      }
+
+      function apply() {
+        var f = filters();
+        ["parks-doc", "parks-open", "parks-plain", "play-layer"].forEach(function (id) {
+          if (map.getLayer(id)) map.setFilter(id, f);
+        });
+        var playOn = active.play;
+        if (map.getLayer("play-layer")) {
+          map.setLayoutProperty("play-layer", "visibility", playOn ? "visible" : "none");
+        }
+      }
+
+      map.on("load", function () {
+        map.addSource("parks", { type: "geojson", data: GEO });
+
+        var base = { type: "circle", source: "parks" };
+
+        map.addLayer(
+          Object.assign({}, base, {
+            id: "parks-plain",
+            filter: ["all", ["==", ["get", "layer"], "park"], ["==", ["get", "stations"], 0], ["==", ["get", "openGym"], false]],
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.5, 16, 5],
+              "circle-color": COLORS.park,
+              "circle-opacity": 0.55,
+              "circle-stroke-width": 0,
+            },
+          }),
+        );
+
+        map.addLayer(
+          Object.assign({}, base, {
+            id: "parks-open",
+            filter: ["all", ["==", ["get", "layer"], "park"], ["==", ["get", "openGym"], true], ["==", ["get", "stations"], 0]],
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4.5, 16, 8],
+              "circle-color": "rgba(184,134,11,0.35)",
+              "circle-stroke-color": COLORS.open,
+              "circle-stroke-width": 1.6,
+            },
+          }),
+        );
+
+        map.addLayer(
+          Object.assign({}, base, {
+            id: "parks-doc",
+            filter: ["all", ["==", ["get", "layer"], "park"], [">", ["get", "stations"], 0]],
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 16, 9],
+              "circle-color": COLORS.doc,
+              "circle-stroke-color": "#fbf7ee",
+              "circle-stroke-width": 1.4,
+            },
+          }),
+        );
+
+        map.addLayer(
+          Object.assign({}, base, {
+            id: "play-layer",
+            filter: ["==", ["get", "layer"], "play"],
+            layout: { visibility: "none" },
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 16, 6],
+              "circle-color": COLORS.play,
+              "circle-opacity": 0.5,
+            },
+          }),
+        );
+
+        map.addLayer({
+          id: "parks-label",
+          type: "symbol",
+          source: "parks",
+          minzoom: 14,
+          filter: ["all", ["==", ["get", "layer"], "park"], [">", ["get", "stations"], 0]],
+          layout: {
+            "text-field": ["get", "name"],
+            "text-size": 11,
+            "text-offset": [0, 0.9],
+            "text-anchor": "top",
+            "text-font": ["Noto Sans Regular"],
+          },
+          paint: { "text-color": "#3b362c", "text-halo-color": "#fbf7ee", "text-halo-width": 1.4 },
+        });
+
+        var popup = new maplibregl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 12,
+          className: "og-popup",
+        });
+
+        ["parks-plain", "parks-open", "parks-doc", "play-layer"].forEach(function (id) {
+          map.on("mouseenter", id, function (e) {
+            map.getCanvas().style.cursor = "pointer";
+            var p = e.features[0].properties;
+            popup
+              .setLngLat(e.lngLat)
+              .setHTML(
+                "<b>" + escapeHtml(p.name) + "</b><br><span>" + statusLine(p) + "</span>",
+              )
+              .addTo(map);
+          });
+          map.on("mouseleave", id, function () {
+            map.getCanvas().style.cursor = "";
+            popup.remove();
+          });
+          map.on("click", id, function (e) {
+            openSheet(e.features[0].properties, e.lngLat);
+          });
+        });
+
+        apply();
+      });
+
+      function statusLine(p) {
+        if (p.kind === "playground") return "Play equipment · OSM";
+        var n = Number(p.stations || 0);
+        if (n > 0) return n + " station" + (n === 1 ? "" : "s") + " recorded";
+        if (p.openGym) return "Open gym tagged in OSM · not recorded";
+        return "Park · no equipment recorded";
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      var sheet = document.getElementById("sheet");
+      var body = document.getElementById("sheet-body");
+      document.getElementById("sheet-close").addEventListener("click", function () {
+        sheet.hidden = true;
+      });
+
+      function openSheet(p, lngLat) {
+        var bits = [];
+        bits.push('<p class="sheet__kind">' + escapeHtml(p.cityName || p.city) + "</p>");
+        bits.push("<h2>" + escapeHtml(p.name) + "</h2>");
+        bits.push('<p class="sheet__status">' + statusLine(p) + "</p>");
+
+        var flags = [];
+        if (p.toilets) flags.push("Toilets");
+        if (p.water) flags.push("Drinking water");
+        if (p.kind === "paid") flags.push("Paid entry");
+        if (flags.length) bits.push('<p class="sheet__flags">' + flags.join(" · ") + "</p>");
+        else bits.push('<p class="sheet__flags sheet__flags--none">No amenities tagged</p>');
+
+        bits.push(
+          '<p class="sheet__small">' +
+            escapeHtml(VERIFY_LABEL_STATIC[p.level] || p.level) +
+            "</p>",
+        );
+
+        var BASE = window.__BASE__ || "";
+        var actions = [];
+        if (p.href) actions.push('<a class="btn" href="' + BASE + p.href + '">Open park page</a>');
+        actions.push(
+          '<a class="btn btn--ghost" href="' +
+            CONTRIBUTE +
+            "?park=" +
+            encodeURIComponent(p.slug) +
+            "&city=" +
+            encodeURIComponent(p.city) +
+            "&name=" +
+            encodeURIComponent(p.name) +
+            "&lat=" +
+            (lngLat ? lngLat.lat : "") +
+            "&lon=" +
+            (lngLat ? lngLat.lng : "") +
+            '">Record equipment here</a>',
+        );
+        bits.push('<div class="sheet__actions">' + actions.join("") + "</div>");
+
+        body.innerHTML = bits.join("");
+        sheet.hidden = false;
+      }
+
+      var VERIFY_LABEL_STATIC = {
+        "osm-import": "OpenStreetMap only — nobody has walked this for the record",
+        "self-declared": "Contributed, position not confirmed",
+        "field-verified": "GPS-verified on site once",
+        "pair-observed": "Two independent checks agree",
+      };
+
+      var qCity = new URLSearchParams(location.search).get("city");
+      if (qCity) {
+        var hit = document.querySelector('[data-city="' + qCity + '"]');
+        if (hit) {
+          document.querySelectorAll("[data-city]").forEach(function (x) { x.classList.remove("is-on"); });
+          hit.classList.add("is-on");
+          active.city = qCity;
+        }
+      }
+
+      document.querySelectorAll("[data-city]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          document.querySelectorAll("[data-city]").forEach(function (x) { x.classList.remove("is-on"); });
+          b.classList.add("is-on");
+          active.city = b.dataset.city;
+          apply();
+        });
+      });
+
+      var wantCity = new URLSearchParams(location.search).get("city");
+      if (wantCity) {
+        var cityBtn = document.querySelector('[data-city="' + wantCity + '"]');
+        if (cityBtn) {
+          document.querySelectorAll("[data-city]").forEach(function (x) { x.classList.remove("is-on"); });
+          cityBtn.classList.add("is-on");
+          active.city = wantCity;
+          apply();
+          cityBtn.scrollIntoView({ block: "nearest", inline: "center" });
+        }
+      }
+
+      document.querySelectorAll("[data-filter]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var k = b.dataset.filter;
+          if (k === "play") {
+            active.play = !active.play;
+            b.classList.toggle("is-on", active.play);
+            b.setAttribute("aria-pressed", String(active.play));
+            if (active.play) active.gym = false;
+          } else {
+            active[k] = !active[k];
+            b.classList.toggle("is-on", active[k]);
+            b.setAttribute("aria-pressed", String(active[k]));
+          }
+          apply();
+        });
+      });
+
+      var qi = document.getElementById("q");
+      var t;
+      qi.addEventListener("input", function () {
+        clearTimeout(t);
+        t = setTimeout(function () {
+          q = qi.value.trim().toLowerCase();
+          apply();
+        }, 140);
+      });
+
+      document.getElementById("retry").addEventListener("click", function () {
+        fallback.hidden = true;
+        map.resize();
+      });
+    })();
+  </script>
+</Base>
+
+<style>
+  .map-page {
+    padding-bottom: 4rem;
+  }
+  .map-shell {
+    position: relative;
+    height: min(72vh, 640px);
+    border-bottom: 1px solid var(--line, #ddd6c6);
+  }
+  .map {
+    position: absolute;
+    inset: 0;
+    background: #eeeae0;
+  }
+  .map-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.7rem;
+    display: grid;
+    gap: 0.45rem;
+    pointer-events: none;
+  }
+  .map-search input {
+    width: 100%;
+    padding: 0.62rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid #d9d2c2;
+    background: #fffdf7;
+    font: inherit;
+    box-shadow: 0 2px 10px rgba(40, 34, 20, 0.08);
+    pointer-events: auto;
+  }
+  .chips {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.1rem;
+  }
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+  .chip {
+    pointer-events: auto;
+    flex: 0 0 auto;
+    padding: 0.34rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid #d9d2c2;
+    background: #fffdf7;
+    font-size: 0.82rem;
+    color: #4a4335;
+    white-space: nowrap;
+  }
+  .chip.is-on {
+    background: #221f19;
+    border-color: #221f19;
+    color: #f6efe0;
+  }
+  .chip--t.is-on {
+    background: #b04a28;
+    border-color: #b04a28;
+  }
+  .legend {
+    position: absolute;
+    left: 0.7rem;
+    bottom: 0.7rem;
+    background: rgba(255, 253, 247, 0.94);
+    border: 1px solid #e2dbc9;
+    border-radius: 10px;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.72rem;
+    color: #4a4335;
+    display: grid;
+    gap: 0.25rem;
+    max-width: 15rem;
+  }
+  .legend span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .dot--doc {
+    background: #b04a28;
+  }
+  .dot--open {
+    background: rgba(184, 134, 11, 0.35);
+    border: 1.5px solid #b8860b;
+  }
+  .dot--park {
+    background: #8d8778;
+  }
+  .sheet {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    background: #fffdf7;
+    border: 1px solid #e2dbc9;
+    border-radius: 14px;
+    padding: 0.9rem 1rem 1rem;
+    box-shadow: 0 8px 30px rgba(40, 34, 20, 0.18);
+    max-height: 58%;
+    overflow: auto;
+  }
+  .sheet h2 {
+    margin: 0 0 0.2rem;
+    font-size: 1.05rem;
+  }
+  .sheet__x {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.5rem;
+    border: 0;
+    background: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: #6b6353;
+  }
+  .sheet__kind {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a8172;
+  }
+  .sheet__status {
+    margin: 0.15rem 0 0.3rem;
+    font-weight: 600;
+    color: #221f19;
+  }
+  .sheet__flags {
+    margin: 0 0 0.4rem;
+    font-size: 0.85rem;
+    color: #4a4335;
+  }
+  .sheet__flags--none {
+    color: #8a8172;
+  }
+  .sheet__small {
+    margin: 0 0 0.7rem;
+    font-size: 0.78rem;
+    color: #6b6353;
+  }
+  .sheet__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .fallback {
+    position: absolute;
+    inset: auto 0.6rem 0.6rem;
+    background: #fffdf7;
+    border: 1px solid #e2dbc9;
+    border-radius: 12px;
+    padding: 0.8rem;
+    font-size: 0.88rem;
+  }
+  .map-foot {
+    max-width: 62rem;
+    margin: 1.4rem auto 0;
+    padding: 0 1rem;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .map-foot__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.8rem;
+  }
+  .map-foot__stats div {
+    border-top: 2px solid #e2dbc9;
+    padding-top: 0.4rem;
+    display: grid;
+  }
+  .map-foot__stats b {
+    font-size: 1.5rem;
+    line-height: 1.1;
+  }
+  .map-foot__stats span {
+    font-size: 0.8rem;
+    color: #6b6353;
+  }
+  .map-foot__note {
+    font-size: 0.85rem;
+    color: #6b6353;
+    max-width: 46rem;
+  }
+  :global(.og-popup .maplibregl-popup-content) {
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+  }
+  @media (min-width: 860px) {
+    .sheet {
+      left: auto;
+      right: 0.8rem;
+      width: 22rem;
+      bottom: 0.8rem;
+    }
+    .legend {
+      bottom: 0.8rem;
+    }
+  }
+</style>

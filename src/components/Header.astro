@@ -3,10 +3,11 @@ import { u } from "../lib/url";
 const here = Astro.url.pathname.replace(/^\/open-gym/, "").replace(/\/$/, "") || "/";
 const links = [
   { href: "/equipment", label: "Equipment" },
+  { href: "/map", label: "Map" },
   { href: "/parks", label: "Parks" },
   { href: "/build", label: "Build a park" },
+  { href: "/contribute", label: "Record a park" },
   { href: "/safety", label: "Safety" },
-  { href: "/videos", label: "Videos" },
   { href: "/about", label: "About" },
 ];
 const isActive = (href: string) => here === href || here.startsWith(href + "/");

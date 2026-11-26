@@ -293,3 +293,328 @@ P1 and P2 can overlap if the illustrations are batched.
 3. **Look** — flat field-guide SVG schematics authored in `src/data/art.ts`; no supplier photos.
 4. **Hosting** — GitHub Pages subpath on `LogicIncZo/open-gym`; no Netlify custom domain yet.
 5. **Children** — kept the conservative 12+ line for fitness stations; play/climbing stations are a separate category with their own supervision notes.
+
+---
+
+# Part II — The Parks Map
+
+*Added 2026-11-26, after reviewing `maps.reclaimchennai.city/tgsrtc` (TGSRTC bus map, `reclaimchennai/mtc-bus-map`) as the reference implementation. Phase M below is additive to v0.1; P0–P4 above are shipped or shipped-in-part.*
+
+## 13. What the reference actually does, and what transfers
+
+| Mechanic in `mtc-bus-map` | How it works there | Transfers to parks? |
+|---|---|---|
+| Static app, no build step | MapLibre GL over GeoJSON in `web/data/`; layer geometry is prebuilt by `pipeline/` scripts | **Yes, directly.** Same stack, same shape: `parks.geojson` + `equipment.geojson`. |
+| Collector decoupling | Visitors never call MTC or Chalo; one server collector polls politely and everyone reads *our* copy | **Partly.** Parks aren't a rate-limited API. The equivalent is a *seed harvest* per city (OSM + municipal lists) run weekly, never on request. |
+| Delta sync (`delta/<t>.json`) | First load = 1 MB; after that only changed rows, keyed on the feed's own timestamp; 404 = nothing new | **Yes, but simpler.** Parks change weekly, not every 10 s. A single `parks.delta.json` keyed on `updated_at` cursor is enough — no service needed until the layer is large. |
+| Rider reports, fixed answers only | `/api/report` with a handful of buttons — full / on time / ramp worked. No free text, IPs never stored | **Yes, and this is the core.** "Broken slide", "no water", "lights out", "gym area locked", "station missing" as tap-only answers. |
+| Edit → admin approve → overlay | `editor.js` posts to `edits/`; `approved.json` is laid over the network at load; `busmapMyEdits` holds your pending edits in the browser | **Yes.** Contributor submits a corrected inventory; it lands in a queue; approved edits overlay the base data for everyone. |
+| Live 3D movers, ETAs, dwell model | Bespoke WebGL bus models, travel model, nowcast | **No.** Nothing about parks is live. Do not build it. |
+| Dashboard rebuilt hourly from archive | `/db`: speeds, bunching, crowding | **Adapted.** The parks dashboard is not a tracker — it is a *coverage and state-of-repair* board per zone. |
+
+The lesson is the architecture, not the feature list: **static app + git-stored data + a thin contribution queue + a build pipeline that regenerates layers.** That survives with no server and no accounts.
+
+## 14. The reframe: parks don't move, so freshness is the product
+
+A bus map's value decays in seconds. A park record's value decays in *months* — a swing is welded, a gate is locked, the gym area is paved over, the park is renamed after a politician. The thing a resident actually needs to know is not "where is the park" (Google has that) but:
+
+1. **Does this park have the thing I came for?** — gym stations, a walking track of known length, a toilet that is open, drinking water, lights that work after 6 pm.
+2. **Is it working right now-ish?** — as of the last verified date, what is broken.
+3. **Who fixes it?** — the maintaining body (GCC zone / GHMC circle / HMDA / RWA / private) and the complaint channel.
+
+So the portal is a **state-of-repair register**, and the headline field on every park is `lastVerified`. A park with no verification in 12 months is visibly stale, not silently wrong. That is the honest design, and it is also what makes the map worth maintaining: staleness is a prompt to act, not a bug.
+
+## 15. Park record v2
+
+Extends the current `src/data/parks/<city>/<slug>.json` (backward compatible — v1 records still build).
+
+```jsonc
+{
+  "slug": "natesan-park",
+  "name": "Natesan Park",
+  "nameLocal": "நடேசன் பூங்கா",          // optional, script-preserved
+  "city": "Chennai", "citySlug": "chennai",
+  "zone": "Teynampet",                    // GCC zone / GHMC circle
+  "kind": "park",                         // park | garden | playground | lakefront | median | community
+  "geometry": {                           // polygon preferred, point+radius acceptable
+    "type": "Polygon", "coordinates": [[[...]]],
+    "source": "osm", "osmId": "way/123456789", "precision": "polygon" | "approximate"
+  },
+  "areaSqm": 12400,
+
+  "hours": { "open": "05:00", "close": "21:00", "seasonal": null },
+  "entry": { "type": "free" },            // free | ticketed | members-only | unclear
+  "surface": "paved walkway; sand under equipment",
+
+  "amenities": {                          // tri-state, never a bare boolean
+    "toilets":      "yes",                // yes | no | seasonal | unclear
+    "drinkingWater":"yes",
+    "lighting":     "yes",
+    "seating":      "yes",
+    "shade":        "partial",
+    "boundaryWall": "yes",
+    "security":     "no",
+    "parking":      "street",
+    "accessibleRoute": "yes",
+    "playEquipment":"yes",
+    "walkingTrack": { "present": true, "lengthM": 420, "surface": "paved", "measuredBy": "gps-trace" }
+  },
+
+  "gym": {
+    "present": true,
+    "area": "north-east corner, sand",
+    "instructor": "none",
+    "stations": [ { "id": "air-walker", "condition": "good" } ]   // ids join to /data/equipment.json
+  },
+
+  "maintainer": {
+    "body": "Greater Chennai Corporation",
+    "unit": "Zone 9 — Teynampet",
+    "channel": "GCC 1913",                // complaint route, verified or "not checked"
+    "channelVerified": false
+  },
+
+  "verification": {
+    "level": "contributor",               // demo | unverified | contributor | field-verified | steward
+    "lastVerified": "2026-11-24",
+    "verifiedBy": "contributor handle",   // optional, self-chosen, not an account
+    "method": "walked the site",
+    "photoCount": 3
+  },
+
+  "reports": 2,                           // open reports, aggregated at build
+  "updatedAt": "2026-11-24T10:12:00+05:30",   // delta cursor
+  "notes": ["..."],
+  "contributor": "...",
+  "disclaimer": "..."
+}
+```
+
+`condition` on a station and `amenities` tri-state use the same vocabulary everywhere so a report can flip one field mechanically. `updatedAt` is the only thing the client needs to sync.
+
+## 16. The OSM bridge — the reason this can outlive the site
+
+Two facts found while planning, both checked against live data on 2026-11-26:
+
+- India already has **471 `leisure=fitness_station` nodes** mapped in OSM, plus parks, playgrounds and `fitness_station=*` equipment tagged inside them.
+- open-gym's 32 stations map to an **existing OSM tag value for 28 of 32** (taginfo, 500 most-used values):
+
+| open-gym id | OSM `fitness_station=` | | open-gym id | OSM `fitness_station=` |
+|---|---|---|---|---|
+| pull-up-bar | `horizontal_bar` (4 802) | | leg-extension | `leg_extension` (23) |
+| monkey-bars | `horizontal_ladder` (1 902) | | shoulder-press | `shoulder_press` (26) |
+| parallel-bars | `parallel_bars` (1 829) | | seated-row | `seated_row` (2) |
+| balance-beam | `balance_beam` (1 004) | | pendulum | `pendulum` (2) |
+| sit-up-board | `sit-up` (1 503) | | treadmill-rollers | `treadmill` (9) |
+| push-up-bars | `push-up` (720) | | twister | `ab_twist` (196) |
+| cross-trainer | `elliptical_trainer` (553) | | moon-walker | `air_walker` (527) |
+| air-walker | `air_walker` (527) | | arm-wheel, shoulder-wheel | `steering_wheel` (162) |
+| exercise-bike | `exercise_bike` (487) | | back-extension | `hyperextension` (412) |
+| rowing-machine | `rower` (326) | | lat-pulldown | `pull_down` (130) |
+| chest-press | `chest_press` (209) | | leg-press | `leg_press` (175) |
+| rider | `rider` (48) | | stepper | `stepper` (110) |
+| ski-walker | `ski_swing` (112) | | stretch-station | `stretch_bars` (158) |
+| climbing-net | `climbing_frame` | | | |
+| **no match** | calf-raise · hip-adductor · multi-gym · waist-bend | | | |
+
+Consequences:
+
+1. **Seed, don't start empty.** A city's park layer begins as an OSM extract (`leisure=park` polygons + `leisure=fitness_station` + `leisure=playground` inside them), then gets enriched. Day one the map is already useful and already attributed.
+2. **Contributions round-trip.** Every approved park edit can emit an `.osm` changeset fragment or a JOSM-ready file. The site becomes an on-ramp to OSM instead of a competing silo — so the data survives this project.
+3. **Four missing values** (`calf_raise`, `hip_adductor`, `multi_gym`, `waist_bend`) are a proposal to the OSM tagging list, not a blocker; until accepted, map them to the nearest documented value and keep the open-gym id as the site-side truth.
+
+`src/data/osm-crosswalk.json` will hold this table so both the site and the export script read one source.
+
+## 17. Screens
+
+| Route | What it is |
+|---|---|
+| `/map` | The map. MapLibre over `parks.geojson`. Filters: gym present, toilets, water, lights, walking track ≥ N m, last verified within X months, condition = any broken. Locate-me. Offline once cached. |
+| `/parks/[city]/[slug]` | **Exists.** Gains a real map thumb, amenity table, freshness banner, maintainer + complaint channel, and "report a problem" / "correct this park" actions. |
+| `/contribute` | The no-account capture flow: pin or draw the park → tick amenities → tick stations present → condition per station → photo → submit. Submits a GitHub issue (v1) or POSTs to the queue (v2). |
+| `/reports` | Open reports across the area, newest first, filterable by station/amenity. Public — a broken swing that stays broken for months is the point of publishing it. |
+| `/coverage` | Dashboard: parks mapped per zone, % verified in last 6/12 months, most common broken facility, top unmaintained. Rebuilt at build time, not hourly. |
+| `/data/parks.json`, `.geojson`, `.csv` | The open export. Same contract as `/data/equipment.json`. |
+
+`/build` and `/park?p=` (the stateless token builder) stay as-is and gain a "save this as a park record" button that pre-fills the contribute form — that is the shortest path from a resident's own park to a published pin.
+
+## 18. Contribution and moderation
+
+Two tracks, deliberately different friction:
+
+**Track A — report (10 seconds, phone at the park).** Fixed answers only: which park, which facility/station, what's wrong (`broken`, `missing`, `locked`, `no water`, `no lights`, `unsafe`, `other`), photo optional. No free text, no name, no email. One open report per facility per 7 days per device (localStorage token, not an IP). This is the `report_api.py` pattern.
+
+**Track B — add or correct a park (minutes, at a desk or on a walk).** The full record via `/contribute` or a GitHub issue form. Reviewed before merge. `verified: true` only after a human confirms, and only the reviewer sets `verification.level`.
+
+Moderation is a git queue, not a database: a `queue/` directory of pending JSON, a `scripts/review.py merge|reject` CLI, and an issue label. At real volume, swap in the reclaimchennai pattern — a small service writing `approved.json` + deltas — but do not build it before there is volume.
+
+**Anti-vandalism:** edits overlay only after approval; every record carries `verification.level` and `lastVerified`; the map defaults to showing level ≥ `contributor`; a mass-delete or edit streak from one submission batch is flagged in review. Never silently overwrite — keep prior versions in git, which is free history.
+
+**No PII.** No accounts, no email, no IP storage, contributor handle self-chosen and optional. Photos get EXIF stripped on ingest (GPS kept as the park's, not the person's) and faces flagged for the reviewer.
+
+## 19. Sync and offline
+
+- Build emits `parks.geojson` (geometry + filter fields), `parks.index.json` (cards), `parks.delta.json` (records changed since a timestamp, capped at the last 90 days; older asks get a full refetch).
+- Client keeps `updated_at` cursor in IndexedDB. On open: full fetch if no cursor, else one delta request. 404 = nothing new.
+- Service worker caches the layer + the 32 equipment pages + the park pages you have opened, so the map, the amenity checklists and the usage guides all work standing in the park with no signal. This is the strongest single argument for building it on open-gym rather than as a separate site.
+- Photos lazy-load from a resized derivative; never block map interaction.
+
+## 20. Seeding
+
+Per city, `scripts/seed-city.sh <city>`:
+
+1. OSM extract via Overpass (`leisure=park|garden|playground` in the admin boundary, plus `leisure=fitness_station` and `fitness_station=*` inside) → `data/seed/<city>.geojson`.
+2. Municipal open data where it exists (GCC park lists, GHMC/HMDA park lists, ward-level) → `data/seed/<city>-municipal.json`, matched to OSM by name + proximity, unmatched kept as `precision: approximate`.
+3. Merge to park records with `verification.level = "unverified"` and `lastVerified = null`. **Never** invent amenities for a seeded park — absence is `unclear`, not `no`.
+4. Hand-verify a first tranche (20–30 parks in one walkable zone) to `field-verified`, which is what makes the map credible.
+
+Seed order: the city the user can actually walk first. Chennai has the existing demonstration record; Hyderabad is where the reference (TGSRTC) came from. Both are worth doing; pick one to field-verify.
+
+## 21. Verification levels
+
+| Level | Meaning | Shown by default |
+|---|---|---|
+| `demo` | Shipped example, illustrative | flagged |
+| `unverified` | Seed from OSM/municipal data, nobody has walked it | grey pin |
+| `contributor` | A person submitted a full record; reviewed, not visited by the reviewer | normal pin |
+| `field-verified` | Reviewer or steward visited on `lastVerified` | solid pin + date |
+| `steward` | Maintainer, RWA, or park staff maintains the record | solid + badge |
+
+A park reverts to staleness (`staleSince`) after 12 months without verification. Stale is displayed, never hidden.
+
+## 22. Phases
+
+| Phase | Scope | Estimate |
+|---|---|---|
+| M0 | `osm-crosswalk.json`; park schema v2 + migration; seed script for one city; `parks.geojson` in the build | 1.5 days |
+| M1 | `/map` with filters, locate-me, park sheet, offline layer | 2 days |
+| M2 | `/contribute` capture flow + GitHub issue queue + `scripts/review.py` + reports (fixed answers) | 2–3 days |
+| M3 | Field-verify one zone (20–30 parks), `/coverage`, `/reports`, OSM changeset export | 2 days |
+| M4 | Delta sync, second city, Tamil/Hindi labels, steward accounts-by-claim (optional) | ongoing |
+
+M0–M1 gives a shareable map. M2 is what makes it crowdsourced. M3 is what makes it trustworthy.
+
+## 23. Decisions needed
+
+1. **Seed city to field-verify first** — Chennai (existing demo record, GCC data) or Hyderabad (where the reference came from). Both can be seeded; only one gets walked first.
+2. **Report intake for v1** — GitHub issue queue (zero infra, needs a GitHub account to submit) vs a tiny endpoint (works for anyone, needs a host). Recommendation: GitHub for the full-record track, endpoint for the tap-only report track, because the tap track is the one that has to work for a walker with no account.
+3. **Publish-to-OSM on approval** — auto-generate the changeset fragment for the reviewer to upload, or leave OSM entirely to the contributor. Recommendation: generate it, human uploads. Never auto-upload to OSM.
+4. **Scope of `kind`** — parks only, or also playgrounds, lakefronts and median green. Recommendation: include them; residents do not distinguish, and a lakefront walk is the same use case.
+
+## 24. Decisions taken (2026-11-26) — the answer to §23
+
+1. **Seed city: Hyderabad.** Expanded slowly from there. Chennai keeps its existing demonstration record; no other city is seeded until Hyderabad is walked.
+2. **Separate layer, not a separate site.** The map lives at `/map` inside open-gym, so the 32 station pages, the safety page and the offline cache are one thing. A park dot links into the station page for whatever is recorded there.
+3. **Public parks only, paid entry included.** `kind` = `public` | `paid` | `complex`; `leisure=playground` is folded into a `play` layer rather than a park of its own. The city page and map both show paid parks as paid, and a paid park with no recorded equipment still reads as *unrecorded*, never as *empty*.
+4. **Anonymous verification from a GPS fix.** No account, no name, no IP stored. If the browser fix lands within 150 m of the park pin the report is filed `field-verified`; outside it, `self-declared`. Two independent observations of the same park make it `pair-observed`.
+5. **Photos are optional and stripped.** The page draws the image to a canvas before upload, which drops every EXIF block (including GPS and device model); the server stores the re-encoded JPEG with no filename and no IP.
+
+### What that turned into
+
+| Piece | Where |
+|---|---|
+| City inventory from OSM (canvas) | `scripts/seed_city.py` → `src/data/city-index/<city>.json` |
+| Map with layers and filters | `src/pages/map.astro` + `src/pages/data/parks.geojson.ts` |
+| Anonymous capture flow | `src/pages/contribute.astro` |
+| Intake + validation + storage | `services/intake/server.ts`, deployed as the zo.space route `/api/gym-report` (+ `/stats`) |
+| Accept a report into a park record | `scripts/moderate.py accept <id>` |
+| City landing + survey queue | `src/pages/parks/[city]/index.astro` |
+
+Implemented ladder (this supersedes the table in §21, which was written before the schema existed):
+
+| Level | How it is reached | Shown as |
+|---|---|---|
+| `osm-import` | OpenStreetMap only; nobody has walked it | grey |
+| `linking` | OSM station tags matched to the 32-station vocabulary | amber |
+| `contributor` | Submitted, fix did not land in the park | amber |
+| `field-verified` | Anonymous GPS fix within 150 m | solid |
+| `pair-observed` | Two independent fixes agree | solid + badge |
+
+### First measured coverage, Hyderabad, 2026-11-26
+
+- 5,490 park-ish OSM elements in the greater-Hyderabad bbox, 323 named parks after tiling and de-duplication.
+- **Four** exercise stations mapped in the whole metro; two carry no `fitness_station` tag, so they cannot be matched to the vocabulary. One park (Gachibowli) is tagged `leisure=fitness_station` without station detail.
+- Zero parks have a station-level record. The map therefore ships with a truthful scoreboard: 323 parks, 0 with equipment listed.
+
+That number is the argument for the project. The OSM park canvas is good; the equipment record does not exist, because recording it takes a person standing in the park. §20 item 4 (hand-verify one walkable zone) is the next step and stays human work.
+
+
+---
+
+## 24. Decisions taken (2026-11-26)
+
+Settled with the project owner, and built:
+
+1. **City order — Hyderabad first.** It is where the reference map (TGSRTC crowdsourcing) came from, and the OSM baseline is instructive: 323 named parks, 2 areas tagged `sport=fitness` with no station detail, 0 station-level records. Chennai keeps its demonstration record and gets seeded when the Hyderabad tranche is walked. Expansion after that is one `seed_city.py` run plus a walk.
+2. **Separate layer.** The map carries three layers — parks, play equipment, recorded stations — toggled independently, with amenity filters (toilets, drinking water) on top. Playgrounds are not gyms and are not presented as gyms anywhere.
+3. **Only public parks, paid entry allowed.** `kind` distinguishes `public`, `paid` and `playground`; `access` records free/paid/members. Private residential-society and commercial gyms are out of scope.
+4. **Anonymous verification with a GPS fix.** A fix inside 150 m of the park pin is itself the verification — no account needed, and it lifts the record to `field-verified`. Outside that radius the report is still accepted but filed as `self-declared` so nothing is silently overstated. Two independent verifications escalate to `pair-observed`.
+5. **Photo submission.** Optional, consent-gated, re-encoded to strip EXIF (including GPS), stored without a reporter name, and never required for a valid report.
+
+Rejected on the way: a GitHub-issue-only intake (requires an account, which kills the walk-up contributor), and auto-publishing accepted reports (nothing enters the registry without a human accepting it).
+
+Open: whether accepted `field-verified` reports should publish an OSM changeset fragment automatically (recommendation stands: generate, human uploads), and when to open the second city.
+
+## 25. Current state
+
+| Area | State |
+|---|---|
+| Station catalogue | 32 stations, illustrated, photographed where licensed, 25 mapped to OSM tags, 4 proposed |
+| Park registry | 1 page (Chennai demonstration record); Hyderabad records arrive via moderation |
+| Park canvas | Hyderabad 323 parks · 1 OSM-tagged open gym, equipment unknown |
+| Map | Built: 3 layers, 6 filters, city chips, deep link into the capture form |
+| Capture | Built: GPS-gated, 32-station checklist, amenities, photo, anonymous |
+| Intake | Live at `cashlessconsumer.zo.space/api/gym-report`, CORS-restricted, EXIF stripped |
+| Moderation | `scripts/moderate.py` list / accept / reject |
+| Tests | typecheck 0 errors, 47 pages build, offline PWA intact |
+
+---
+
+# Part III — What was built (2026-11-26)
+
+The plan above is the design. This section records what actually shipped and where it departed from the plan.
+
+## Decisions taken
+
+1. **City order — Hyderabad first.** Against the plan's open question (#23.1). Hyderabad is where the reference map came from and where the user can walk. Chennai keeps its demonstration record.
+2. **Play equipment is a separate layer, not a park kind.** `leisure=playground` is drawn on its own filter so a parent looking for a swing is not reading a fitness circuit. Park records keep `kind: public | paid`.
+3. **Public parks only, paid-entry included.** No commercial gyms, no gated society lawns. `fee=yes` parks are kept and badged.
+4. **Anonymous verification by GPS fix.** Because the case for excluding commercial gyms is "parks are public", the same logic allows an on-site fix to stand as a verification without an account. 150 m radius; stored rounded; nothing else about the reporter kept.
+5. **Photos accepted.** Re-encoded server-side so EXIF (GPS, serials) is stripped before storage.
+6. **Intake is a small external endpoint, not a GitHub issue.** The plan's recommendation (#23.2) was GitHub for full records, endpoint for tap-only reports. In practice both paths converge on the same form, and requiring a GitHub account for a walker is a hard stop. One endpoint, one queue, moderation is the gate.
+7. **Park inventory ≠ park registry.** 1,283 park-ish OSM elements in greater Hyderabad collapsed to 323 named parks by slug dedupe; pages are only minted where equipment has actually been recorded.
+
+## What the seed found
+
+Greater Hyderabad, bbox 17.15,78.20 → 17.60,78.65:
+
+| | |
+|---|---|
+| Named parks, playgrounds, gardens | 323 |
+| `leisure=fitness_station` elements | 4 |
+| With a `fitness_station=*` value (i.e. mappable to a station) | 0 |
+| Open gyms tagged as an area, no station detail | 1 (Gachibowli Park) |
+| Park records with equipment listed | 0 |
+
+This is the argument for the project stated as a number: the largest open-data source on earth holds almost nothing about the gyms people actually use. The map is not a scrape of existing knowledge; the knowledge does not exist yet.
+
+## Deferred, with reasons
+
+- **Polygons.** The seed fetches `out center tags`, so parks are points. Real outlines need an `out geom` pass and a heavier build; points carry the survey use case.
+- **Delta sync / IndexedDB cursor** (§19). The full GeoJSON is 346 features and compresses small; the delta machinery is not worth it until a second city is dense.
+- **Publish-to-OSM changeset export** (#23.3). Deferred, not dropped — and when it lands it must stay human-uploaded.
+- **Municipal park lists.** GHMC publishes no machine-readable list worth matching against; the OSM set is the honest starting canvas.
+
+---
+
+## Decisions taken 2026-11-26 — the crowdsourced layer
+
+The reference model is `maps.reclaimchennai.city` (crowdsourced, one city, layers, shareable). Applied here:
+
+1. **One city first.** Hyderabad seeds the canvas; other cities are added only when someone commits to walking them. The city page publishes how much is actually known, and the survey queue names the unrecorded parks instead of hiding them.
+2. **Layers are separate surfaces, not one map.** The park canvas (OSM), recorded station layer, and play-equipment layer toggle independently, so a playground is not mistaken for a gym and an OSM gym tag is not mistaken for a survey.
+3. **Only public parks.** Municipal, panchayat and paid-entry parks are all in scope — a paid entry park is a public park with a ticket. Club and residential-association gyms are out of scope; anything gated behind membership is not a public facility.
+4. **Anonymous verification on a GPS fix.** No account is the design, not a gap: a fix within 150 m of the park pin files the report as `field-verified`. The comparison happens server-side so the claim cannot be set by editing the request.
+5. **Photos are optional and metadata-free.** Canvas re-encode in the browser, segment stripping on the server, refusal rather than storage when stripping fails.
+
+The honest baseline this produced: 323 named parks in Hyderabad, 1 open gym tagged in OSM with no station detail, 0 with a station listing. That zero is the point — a crowdsourced map is worth building precisely where the official record is empty, and the map must say so rather than fill the gap with inference.

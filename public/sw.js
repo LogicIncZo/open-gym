@@ -1,7 +1,7 @@
 /* Open Gym offline cache. Install prefetches every page from offline-manifest.json,
    so the whole field guide is available at the park with no signal. */
 
-const CACHE = "open-gym-v2";
+const CACHE = "open-gym-v3";
 const BASE = "/open-gym";
 
 self.addEventListener("install", (event) => {

@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "purpose": "Maps an open-gym station id to its OpenStreetMap fitness_station=* value, so park inventories can be seeded from OSM and contributions can round-trip back.",
+    "checked": "2026-11-26",
+    "source": "https://taginfo.openstreetmap.org/api/4/key/values?key=fitness_station (top 500 values by count)",
+    "note": "osmCount is the global tag usage at check time, not India-only. A null osm value means no documented match; propose the tag, do not invent usage.",
+    "indiaContext": "471 leisure=fitness_station nodes mapped in India at check time (Overpass, partial catalogue)."
+  },
+  "map": {
+    "pull-up-bar": { "osm": "horizontal_bar", "osmCount": 4802 },
+    "monkey-bars": { "osm": "horizontal_ladder", "osmCount": 1902 },
+    "parallel-bars": { "osm": "parallel_bars", "osmCount": 1829 },
+    "sit-up-board": { "osm": "sit-up", "osmCount": 1503 },
+    "balance-beam": { "osm": "balance_beam", "osmCount": 1004 },
+    "push-up-bars": { "osm": "push-up", "osmCount": 720 },
+    "cross-trainer": { "osm": "elliptical_trainer", "osmCount": 553 },
+    "air-walker": { "osm": "air_walker", "osmCount": 527 },
+    "exercise-bike": { "osm": "exercise_bike", "osmCount": 487 },
+    "back-extension": { "osm": "hyperextension", "osmCount": 412 },
+    "rowing-machine": { "osm": "rower", "osmCount": 326 },
+    "chest-press": { "osm": "chest_press", "osmCount": 209 },
+    "twister": { "osm": "ab_twist", "osmCount": 196 },
+    "leg-press": { "osm": "leg_press", "osmCount": 175 },
+    "arm-wheel": { "osm": "steering_wheel", "osmCount": 162 },
+    "shoulder-wheel": { "osm": "steering_wheel", "osmCount": 162 },
+    "stretch-station": { "osm": "stretch_bars", "osmCount": 158 },
+    "lat-pulldown": { "osm": "pull_down", "osmCount": 130 },
+    "ski-walker": { "osm": "ski_swing", "osmCount": 112 },
+    "stepper": { "osm": "stepper", "osmCount": 110 },
+    "rider": { "osm": "rider", "osmCount": 48 },
+    "shoulder-press": { "osm": "shoulder_press", "osmCount": 26 },
+    "leg-extension": { "osm": "leg_extension", "osmCount": 23 },
+    "treadmill-rollers": { "osm": "treadmill", "osmCount": 9 },
+    "pendulum": { "osm": "pendulum", "osmCount": 2 },
+    "seated-row": { "osm": "seated_row", "osmCount": 2 },
+    "climbing-net": { "osm": "climbing_frame", "osmCount": null, "note": "Documented on the OSM playground/fitness pages but below the top-500 usage cut; climbing_wall exists at count 3 and is a different object." },
+    "moon-walker": { "osm": "air_walker", "osmCount": 527, "note": "Moon walker is the common Indian trade name for an air-walker variant; mapped to air_walker rather than a separate value." }
+  },
+  "proposed": {
+    "calf-raise": { "osm": null, "proposal": "calf_raise", "status": "not-in-osm" },
+    "hip-adductor": { "osm": null, "proposal": "hip_adductor", "status": "not-in-osm" },
+    "multi-gym": { "osm": null, "proposal": "multi_gym", "status": "not-in-osm", "note": "Some mappers use fitness_station=yes or a man_made structure for the combined unit; a distinct value is cleaner." },
+    "waist-bend": { "osm": null, "proposal": "waist_bend", "status": "not-in-osm" }
+  }
+}

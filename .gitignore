@@ -3,3 +3,11 @@ dist/
 .astro/
 *.log
 .DS_Store
+
+# contributor data stays off the public repo
+.cache/
+scripts/__pycache__/
+intake/reports/*
+intake/photos/*
+!intake/reports/.gitkeep
+!intake/photos/.gitkeep

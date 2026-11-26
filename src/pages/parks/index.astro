@@ -1,6 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { PARKS } from "../../data/parks";
+import { PARKS, CITIES, cityLabel, cityStats } from "../../data/parks";
 import { byId } from "../../data/equipment";
 import { u } from "../../lib/url";
 
@@ -34,7 +34,14 @@ const flagged = PARKS.flatMap((p) => p.stations.filter((s) => s.condition === "p
 
     <div class="row" style="margin:18px 0 4px">
       <a class="btn btn--sm btn--terra" href={u("/build")}>Add your park</a>
+      <a class="btn btn--sm btn--ghost" href={u("/map")}>See every park on the map</a>
       <span class="tiny muted">No account needed — the park travels in the link.</span>
+    </div>
+
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:14px 0 0">
+      {CITIES.map((c) => (
+        <a class="chip" href={u(`/parks/${c}/`)}>{cityLabel(c)}</a>
+      ))}
     </div>
 
     {flagged.length > 0 && (
@@ -46,6 +53,31 @@ const flagged = PARKS.flatMap((p) => p.stations.filter((s) => s.condition === "p
         </p>
       </div>
     )}
+
+    <section class="section">
+      <div class="section__head">
+        <h2>By city</h2>
+        <span class="small muted">map coverage vs recorded equipment</span>
+      </div>
+      <div class="grid grid--3">
+        {CITIES.map((c: string) => {
+          const st = cityStats(c);
+          return (
+            <a class="card" href={u(`/parks/${c}/`)} style="text-decoration:none;color:inherit">
+              <h3 style="margin-bottom:4px">{cityLabel(c)}</h3>
+              <p class="small muted" style="margin-bottom:6px">
+                {st.total} parks mapped · {st.documented} with equipment listed
+              </p>
+              <p class="row" style="margin:0;gap:6px">
+                <span class={`badge ${st.openGymUnrecorded > 0 ? "badge--amber" : "badge--quiet"}`}>
+                  {st.openGymUnrecorded} open gym{st.openGymUnrecorded === 1 ? "" : "s"} unsurveyed
+                </span>
+              </p>
+            </a>
+          );
+        })}
+      </div>
+    </section>
 
     {cities.map((city) => (
       <section class="section">

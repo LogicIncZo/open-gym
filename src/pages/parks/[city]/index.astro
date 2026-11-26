@@ -1,0 +1,236 @@
+---
+import Base from "../../../layouts/Base.astro";
+import { u } from "../../../lib/url";
+import {
+  CITY_INVENTORY,
+  CITIES,
+  PARKS,
+  cityInventory,
+  cityLabel,
+  cityStats,
+  surveyQueue,
+  VERIFY_LABEL,
+} from "../../../data/parks";
+
+export function getStaticPaths() {
+  return CITIES.map((city) => ({ params: { city } }));
+}
+
+const { city } = Astro.params;
+const label = cityLabel(city!);
+const stats = cityStats(city!);
+const rows = cityInventory(city!);
+const documented = PARKS.filter((p) => p.citySlug === city);
+const openGyms = rows.filter((p) => p.openGym && p.stationCount === 0);
+const queue = surveyQueue(city!, 36);
+const inv = CITY_INVENTORY[city!];
+const fetched = inv?.fetched ?? null;
+---
+
+<Base
+  title={`${label} parks — Open Gym`}
+  description={`Every public park mapped in ${label}, which ones carry an open gym, and which ones still need someone to walk them and record the equipment.`}
+  path={`/parks/${city}`}
+>
+  <div class="wrap" style="padding-top:22px">
+    <p class="eyebrow">City · {label}</p>
+    <h1 style="margin-bottom:0.3em">{label} parks</h1>
+    <p class="muted" style="max-width:64ch">
+      {stats.total} public parks are mapped in this city. {stats.documented} of them have their
+      equipment written down station by station. The rest are the work: someone has to stand in them
+      and tick what is actually there.
+    </p>
+
+    <div class="row" style="gap:8px;margin:16px 0 6px;flex-wrap:wrap">
+      <a class="btn btn--sm btn--terra" href={u(`/map?city=${city}`)}>Open the map</a>
+      <a class="btn btn--sm btn--ghost" href={u("/contribute")}>Record a park</a>
+      <a class="btn btn--sm btn--ghost" href={u("/build")}>Build a share page</a>
+    </div>
+
+    <div class="grid grid--4" style="margin-top:18px">
+      <div class="card card--soft">
+        <p class="stat__n">{stats.total}</p>
+        <p class="small muted" style="margin:0">parks mapped</p>
+      </div>
+      <div class="card card--soft">
+        <p class="stat__n">{stats.documented}</p>
+        <p class="small muted" style="margin:0">with equipment listed</p>
+      </div>
+      <div class="card card--soft">
+        <p class="stat__n">{stats.openGymUnrecorded}</p>
+        <p class="small muted" style="margin:0">open gyms, not yet surveyed</p>
+      </div>
+      <div class="card card--soft">
+        <p class="stat__n">{stats.withToilets}</p>
+        <p class="small muted" style="margin:0">with toilets on site</p>
+      </div>
+    </div>
+
+    <div class="callout callout--amber" style="margin-top:18px">
+      <p class="callout__title">What the counts mean</p>
+      <p class="small" style="margin-bottom:0">
+        The park list comes from OpenStreetMap contributors (ODbL), not from a municipal register —
+        so it is <em>parks that exist</em>, not every park that exists. Equipment listings only appear
+        here after a person records them: {stats.documented} so far. Nothing on this page is inferred
+        from a photograph or a signboard.
+      </p>
+    </div>
+
+    {documented.length > 0 && (
+      <section class="section">
+        <div class="section__head">
+          <h2>Equipment written down</h2>
+          <span class="small muted">{documented.length} park(s)</span>
+        </div>
+        <div class="grid grid--2">
+          {documented.map((p) => {
+            const poor = p.stations.filter((s) => s.condition === "poor" || s.condition === "broken").length;
+            return (
+              <a
+                class="card"
+                href={u(`/parks/${p.citySlug}/${p.slug}/`)}
+                style="text-decoration:none;color:inherit"
+              >
+                <div class="row" style="justify-content:space-between;align-items:flex-start">
+                  <div>
+                    <h3 style="margin-bottom:2px">{p.name}</h3>
+                    <p class="small muted" style="margin-bottom:0">{p.locality}</p>
+                  </div>
+                  <span class="badge badge--quiet">{VERIFY_LABEL[p.verification.level]}</span>
+                </div>
+                <p class="small" style="margin:10px 0 0">
+                  {p.stations.length} stations · {p.entry}
+                </p>
+                <p class="row" style="margin:8px 0 0;gap:6px">
+                  {poor > 0
+                    ? <span class="cond cond--poor">{poor} needing attention</span>
+                    : <span class="cond cond--good">All listed working</span>}
+                </p>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    {openGyms.length > 0 && (
+      <section class="section">
+        <div class="section__head">
+          <h2>Open gyms marked, equipment unknown</h2>
+          <span class="small muted">{openGyms.length}</span>
+        </div>
+        <p class="small muted" style="max-width:62ch">
+          OpenStreetMap records an outdoor fitness area in these parks, but nobody has listed the
+          stations. These are the highest-value surveys — we know a gym is there, we just do not know
+          what is in it.
+        </p>
+        <ul class="queue">
+          {openGyms.slice(0, 24).map((p) => (
+            <li>
+              <span class="queue__n">{p.name}</span>
+              <a
+                class="queue__a"
+                href={u(`/contribute?park=${encodeURIComponent(p.slug)}&city=${encodeURIComponent(city!)}&name=${encodeURIComponent(p.name)}`)}
+              >
+                Record it
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <section class="section">
+      <div class="section__head">
+        <h2>Survey queue</h2>
+        <span class="small muted">no equipment recorded yet</span>
+      </div>
+      <p class="small muted" style="max-width:62ch">
+        Parks with nothing written down. Pick one near you, walk it, and record what you see — the
+        stations, the condition, whether there is water and a toilet. Two people recording the same
+        park is not a duplicate; it is a confirmation.
+      </p>
+      <ul class="queue">
+        {queue.map((p) => (
+          <li>
+            <span class="queue__n">
+              {p.name}
+              {p.kind === "playground" && <span class="badge badge--quiet">playground</span>}
+            </span>
+            <a
+              class="queue__a"
+              href={u(`/contribute?park=${encodeURIComponent(p.slug)}&city=${encodeURIComponent(city!)}&name=${encodeURIComponent(p.name)}`)}
+            >
+              Record it
+            </a>
+          </li>
+        ))}
+      </ul>
+      {rows.length > queue.length && (
+        <p class="tiny muted" style="margin-top:10px">
+          Showing {queue.length} of {Math.max(rows.length - stats.documented, 0)} parks without
+          equipment records. The map shows all of them.
+        </p>
+      )}
+    </section>
+
+    {fetched && (
+      <p class="tiny muted" style="margin-top:26px">
+        Park list fetched from OpenStreetMap on {fetched}. Data © OpenStreetMap contributors, ODbL.
+      </p>
+    )}
+  </div>
+
+  <style>
+    .stat__n {
+      font-family: var(--font-display);
+      font-size: 1.9rem;
+      line-height: 1;
+      margin: 0 0 4px;
+    }
+    .grid--4 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (min-width: 720px) {
+      .grid--4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    .queue {
+      list-style: none;
+      margin: 10px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 2px;
+      border-top: 1.5px solid var(--line);
+    }
+    .queue li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 2px;
+      border-bottom: 1.5px solid var(--line);
+    }
+    .queue__n {
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .queue__a {
+      flex: 0 0 auto;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--terra);
+      text-decoration: none;
+      border-bottom: 1.5px solid currentColor;
+      padding-bottom: 1px;
+    }
+  </style>
+</Base>
